@@ -1,0 +1,64 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.config.user
+*.aps
+*.bsc
+*.csc
+*.ncb
+*.pdb
+*.opensdf
+*.sdf
+*.tlog
+*.log
+*.obj
+*.o
+*.out
+*.exe
+*.dll
+*.com
+*.lib
+*.nupkg
+*.cache
+*.bak
+*.old
+*.ilk
+*.aps
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+Build/
+bin/
+obj/
+
+# Packages
+packages/
+*.nupkg
+
+# Resharper
+*.DotSettings
+_ReSharper.*/
+
+# Test results
+TestResults/
+*.trx
+
+# Visual Studio Code
+.vscode/
+
+# Ignore sensitive configuration files (e.g., connection strings)
+# If Web.config contains sensitive info, consider managing it separately
+# or ensuring sensitive parts are excluded from Git.
+# Web.config
+# Web.Debug.config
+# Web.Release.config
+
+# Other temporary files
+Thumbs.db
+ehthumbs.db
+Desktop.ini

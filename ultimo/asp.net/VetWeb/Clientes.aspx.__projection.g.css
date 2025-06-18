@@ -1,0 +1,41 @@
+
+/* BEGIN EXTERNAL SOURCE */
+
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 220px;
+            background-color: #343a40;
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: #adb5bd;
+            font-weight: 500;
+            padding: 12px 20px;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: #495057;
+            color: #fff;
+        }
+        .sidebar-brand {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 0 20px 1rem;
+            border-bottom: 1px solid #495057;
+            margin-bottom: 1rem;
+            display: block;
+            text-decoration: none;
+        }
+        .content {
+            margin-left: 220px;
+            padding: 2rem;
+        }
+    
+/* END EXTERNAL SOURCE */
