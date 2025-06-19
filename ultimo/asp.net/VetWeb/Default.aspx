@@ -8,122 +8,464 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Bootstrap Icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <style>
+        /* Global box-sizing for consistent layout */
+        html, body {
+            box-sizing: border-box;
+        }
+        *, *::before, *::after {
+            box-sizing: inherit;
+        }
+
+        /* Definición de variables CSS para colores (solo modo claro) */
+        :root {
+            --body-bg: #f8f9fa;
+            --text-color: #212529;
+            --sidebar-bg: #343a40; /* Fondo del sidebar */
+            --sidebar-text: #adb5bd; /* Color de texto del sidebar */
+            --sidebar-hover-bg: #495057; /* Fondo al pasar el mouse por el sidebar */
+            --sidebar-hover-text: #fff; /* Texto al pasar el mouse por el sidebar */
+            --card-bg: #fff;
+            --card-shadow: rgba(0,0,0,0.08);
+            --card-header-bg: #0d6efd;
+            --card-number-color: #343a40;
+            --cita-card-bg-gradient-start: #e0f2f7;
+            --cita-card-bg-gradient-end: #f0f8ff;
+            --cita-card-border: #b3e0ff;
+            --cita-card-shadow: rgba(0, 0, 0, 0.12);
+            --cita-client-color: #212529;
+            --cita-icon-client: #007bff;
+            --cita-date-bubble-bg: #007bff;
+            --cita-text-color: #495057;
+            --cita-icon-mascota: #28a745;
+            --cita-footer-border: #cceeff;
+            --cita-footer-text: #6c757d;
+            --cita-icon-empleado: #6f42c1;
+            --no-citas-bg: #f0f2f5;
+            --no-citas-text: #6c757d;
+        }
+
         body {
             min-height: 100vh;
-            overflow-x: hidden;
-            font-family: 'Inter', sans-serif; /* Usando fuente Inter */
-            background-color: #f8f9fa; /* Fondo claro */
+            overflow-x: hidden; /* Prevent horizontal scroll for the entire body */
+            font-family: 'Inter', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            padding-left: 220px; /* Space for fixed sidebar on desktop */
         }
+        
+        /* Sidebar styling for desktop/tablet */
         .sidebar {
             position: fixed;
             top: 0;
-            left: 0;
-            height: 100vh;
             width: 220px;
-            background-color: #343a40;
+            height: 100vh;
+            background-color: var(--sidebar-bg);
             padding-top: 1rem;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Sombra sutil */
+            box-shadow: 2px 0 5px var(--card-shadow);
+            overflow-y: auto; /* Scrollbar appears only when content overflows vertically */
+            overflow-x: hidden; /* **CRITICAL: Ensure no horizontal scrollbar within sidebar** */
+            z-index: 1030; /* Higher than content */
+            transition: left 0.3s ease; /* Smooth transition for sliding */
+            left: 0; /* Default position for large screens */
         }
         .sidebar .nav-link {
-            color: #adb5bd;
+            color: var(--sidebar-text);
             font-weight: 500;
-            padding: 12px 20px;
-            transition: background-color 0.3s, color 0.3s; /* Transiciones suaves */
-            border-radius: 8px; /* Esquinas redondeadas para enlaces de navegación */
-            margin: 0 10px 5px 10px; /* Espaciado */
+            padding: 12px 20px; /* Consistent padding-left for all nav links */
+            transition: background-color 0.3s, color 0.3s;
+            border-radius: 8px;
+            margin: 0 10px 5px 10px; /* Margin around the link item */
+            display: flex; /* Make it a flex container */
+            align-items: center; /* Vertically align items */
+            justify-content: space-between; /* Pushes caret to the right, allows space for text */
+            white-space: nowrap; /* Keep content on one line */
+            overflow: hidden; /* Hide overflow of content within the link */
+            text-overflow: ellipsis; /* Show ellipsis for overflowing text */
+        }
+        .sidebar .nav-link i { /* Style for Bootstrap Icons (main and sub-menu icons) */
+            margin-right: 10px; /* Space between icon and text */
+            font-size: 1.1rem;
+            width: 20px; /* Fixed width for icons to align text */
+            text-align: center;
+            flex-shrink: 0; /* **IMPORTANT: Prevent icon from shrinking** */
+        }
+        .sidebar .nav-link span { /* For text within nav-link */
+            flex-grow: 1; /* Allow text to grow and take available space */
+            flex-shrink: 1; /* **IMPORTANT: Allow text to shrink if necessary** */
+            min-width: 0; /* **CRITICAL: Allows flex item to shrink properly with text-overflow** */
         }
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background-color: #495057;
-            color: #fff;
+            background-color: var(--sidebar-hover-bg);
+            color: var(--sidebar-hover-text);
         }
         .sidebar-brand {
-            color: #fff;
-            font-size: 1.8rem; /* Fuente ligeramente más grande */
+            color: var(--sidebar-hover-text);
+            font-size: 1.8rem;
             font-weight: 700;
             padding: 0 20px 1rem;
-            border-bottom: 1px solid #495057;
+            border-bottom: 1px solid var(--sidebar-hover-bg);
             margin-bottom: 1rem;
-            display: block;
+            display: flex; /* Para alinear el icono */
+            align-items: center; /* Para alinear el icono */
+            justify-content: center; /* Centrar el contenido de la marca */
             text-decoration: none;
-            text-align: center;
         }
+        .sidebar-brand svg {
+            margin-right: 10px;
+            font-size: 2.2rem;
+        }
+
+        /* Content area positioning for desktop/tablet */
         .content {
-            margin-left: 220px;
+            margin-left: 0; /* Content starts after sidebar's padding-left */
             padding: 2rem;
+            position: relative;
+        }
+        h2 {
+            color: var(--text-color);
+            transition: color 0.3s;
         }
         .card {
-            border-radius: 10px; /* Esquinas redondeadas para las tarjetas */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* Sombra más pronunciada */
-            transition: transform 0.2s ease-in-out; /* Animación al pasar el ratón */
+            border-radius: 10px;
+            box-shadow: 0 4px 10px var(--card-shadow);
+            transition: transform 0.2s ease-in-out, background-color 0.3s, box-shadow 0.3s;
+            background-color: var(--card-bg);
         }
         .card:hover {
-            transform: translateY(-5px); /* Pequeño levantamiento al pasar el ratón */
+            transform: translateY(-5px);
         }
         .card-header {
-            background-color: #0d6efd; /* Azul primario para el encabezado de las tarjetas */
+            background-color: var(--card-header-bg);
             color: white;
             font-weight: 600;
             border-top-left-radius: 10px;
             border-top-right-radius: 10px;
+            transition: background-color 0.3s;
         }
         .card-body h3 {
-            font-size: 2.5rem; /* Tamaño de fuente grande para los números */
+            font-size: 2.5rem;
             font-weight: 700;
-            color: #343a40;
+            color: var(--card-number-color);
+            transition: color 0.3s;
         }
-        .table-striped tbody tr:nth-of-type(odd) {
-            background-color: rgba(0, 0, 0, 0.03);
+        .card-text.text-muted {
+            color: var(--text-color) !important;
         }
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.075);
-        }
-        .table-primary th {
-            background-color: #0d6efd; /* Azul primario de Bootstrap */
-            color: white;
-            border-color: #0d6efd;
-        }
-        /* Estilos específicos para los contenedores de gráficos */
+
+        /* Styles for chart containers */
         .chart-container {
             position: relative;
-            height: 40vh; /* Altura responsiva */
+            height: 40vh;
             width: 100%;
+        }
+
+        /* Styles for new appointment cards */
+        .cita-card {
+            background: linear-gradient(135deg, var(--cita-card-bg-gradient-start), var(--cita-card-bg-gradient-end));
+            border: 1px solid var(--cita-card-border);
+            border-radius: 12px;
+            box-shadow: 0 6px 15px var(--cita-card-shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cita-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 10px 25px var(--cita-card-shadow);
+        }
+
+        .cita-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--cita-client-color);
+            position: relative;
+            z-index: 1;
+        }
+        .cita-card-header .client-info {
+            display: flex;
+            align-items: center;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--cita-client-color);
+        }
+        .cita-card-header .client-info svg {
+            margin-right: 10px;
+            color: var(--cita-icon-client);
+            font-size: 1.5rem;
+        }
+        .cita-card-header .date-bubble {
+            background-color: var(--cita-date-bubble-bg);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .cita-card-body {
+            margin-top: 5px;
+            padding-bottom: 5px;
+        }
+        .cita-card-body p {
+            margin-bottom: 5px;
+            font-size: 1.05rem;
+            color: var(--cita-text-color);
+            display: flex;
+            align-items: center;
+        }
+        .cita-card-body p svg {
+            margin-right: 10px;
+            color: var(--cita-icon-mascota);
+            font-size: 1.3rem;
+        }
+        .cita-card-body .label {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-right: 5px;
+        }
+        .cita-card-footer {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--cita-footer-border);
+            font-size: 0.98rem;
+            color: var(--cita-footer-text);
+            display: flex;
+            align-items: center;
+        }
+        .cita-card-footer svg {
+            margin-right: 10px;
+            color: var(--cita-icon-empleado);
+            font-size: 1.3rem;
+        }
+        .cita-card-footer .label {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-right: 5px;
+        }
+
+        /* Style for when there are no appointments */
+        .no-citas-message {
+            text-align: center;
+            padding: 30px;
+            color: var(--no-citas-text);
+            font-size: 1.1rem;
+            background-color: var(--no-citas-bg);
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            margin-top: 20px;
+            font-weight: 500;
+        }
+
+        /* Styles for dropdown caret */
+        .dropdown-caret {
+            transition: transform 0.3s ease;
+            margin-left: 8px;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+        /* Rotate caret when collapse is open */
+        .nav-link[aria-expanded="true"] .dropdown-caret {
+            transform: rotate(-180deg);
+        }
+
+        /* Styles for collapsible sub-menu items */
+        .sidebar .nav-item .collapse .nav-item {
+            margin-left: 20px;
+            margin-bottom: 2px;
+            margin-right: 0;
+        }
+        .sidebar .nav-item .collapse .nav-link {
+            justify-content: flex-start;
+        }
+        .sidebar .nav-item .collapse .nav-link i {
+            font-size: 0.95rem;
+            width: 18px;
+            flex-shrink: 0;
+            margin-right: 8px;
+            text-align: center;
+        }
+
+        /* --- RESPONSIVE STYLES FOR MOBILE --- */
+        @media (max-width: 767.98px) {
+            .sidebar {
+                left: -220px; /* Hide sidebar off-screen on small devices by default */
+                box-shadow: none; /* Remove shadow when hidden initially */
+                z-index: 1040; /* Higher z-index for overlay effect when open */
+            }
+            .sidebar.show {
+                left: 0; /* Bring sidebar into view when toggled */
+                box-shadow: 2px 0 5px var(--card-shadow); /* Re-add shadow when shown */
+            }
+
+            body {
+                padding-left: 0; /* No left padding on small screens */
+                padding-top: 5rem; /* Space for the top toggle button */
+            }
+
+            .content {
+                padding: 1rem; /* Adjust padding for content on small screens */
+            }
+
+            /* Responsive button to toggle sidebar */
+            #sidebarToggle {
+                display: flex !important; /* Make sure it's visible on small screens */
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                z-index: 1050;
+                border-radius: 50%;
+                width: 45px;
+                height: 45px;
+                align-items: center;
+                justify-content: center;
+                background-color: var(--sidebar-bg);
+                border-color: var(--sidebar-hover-bg);
+                color: var(--sidebar-text);
+                transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+            }
+            #sidebarToggle:hover {
+                background-color: var(--sidebar-hover-bg);
+                color: var(--sidebar-hover-text);
+            }
+
+            /* Backdrop for when sidebar is open on mobile */
+            .sidebar-backdrop {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+                z-index: 1039; /* Just below sidebar */
+                display: none; /* Hidden by default */
+                transition: opacity 0.3s ease; /* Smooth fade for backdrop */
+                opacity: 0;
+            }
+            .sidebar-backdrop.show {
+                display: block; /* Show backdrop when sidebar is open */
+                opacity: 1;
+            }
+
+            /* Prevent body scrolling when sidebar is open */
+            body.overflow-hidden {
+                overflow: hidden;
+            }
         }
     </style>
 </head>
 <body>
     <form id="form1" runat="server">
-        <!-- Necesario para que el C# pueda ejecutar scripts JavaScript -->
+        <!-- Required for C# to execute JavaScript scripts -->
         <asp:ScriptManager runat="server"></asp:ScriptManager>
 
-        <!-- Barra de Navegación Lateral -->
-        <nav class="sidebar">
-            <a href="Default.aspx" class="sidebar-brand">VetWeb</a>
+        <!-- Button to toggle sidebar on small screens (mobile) -->
+        <button type="button" id="sidebarToggle" class="btn btn-primary d-md-none">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+
+        <!-- Side Navigation Bar -->
+        <nav class="sidebar" id="sidebarMenu">
+            <a href="Default.aspx" class="sidebar-brand">
+                VetWeb
+            </a>
             <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link active" href="Default.aspx">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="Clientes.aspx">Clientes</a></li>
-                <li class="nav-item"><a class="nav-link" href="Razas.aspx">Razas</a></li>
-                <li class="nav-item"><a class="nav-link" href="Especies.aspx">Especies</a></li>
-                <li class="nav-item"><a class="nav-link" href="Mascotas.aspx">Mascotas</a></li>
-                <li class="nav-item"><a class="nav-link" href="Roles.aspx">Roles</a></li>
-                <li class="nav-item"><a class="nav-link" href="Empleados.aspx">Empleados</a></li>
-                <li class="nav-item"><a class="nav-link" href="CategoriasProductos.aspx">Cat. Productos</a></li>
-                <li class="nav-item"><a class="nav-link" href="Subcategoria.aspx">Subcategorías</a></li>
-                <li class="nav-item"><a class="nav-link" href="Servicios.aspx">Servicios</a></li>
-                <li class="nav-item"><a class="nav-link" href="Citas.aspx">Citas</a></li>
-                <li class="nav-item"><a class="nav-link" href="CitaServicios.aspx">Cita-Servicios</a></li>
-                <li class="nav-item"><a class="nav-link" href="VentaServicios.aspx">Venta Servicios</a></li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="Default.aspx">
+                        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="Clientes.aspx">
+                        <i class="bi bi-people-fill"></i><span>Clientes</span>
+                    </a>
+                </li>
+                
+                <!-- Collapsible Menu: Mascotas -->
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#mascotasSubmenu" role="button" aria-expanded="false" aria-controls="mascotasSubmenu">
+                        <i class="bi bi-heart-fill"></i><span>Mascotas</span> 
+                        <i class="bi bi-chevron-down dropdown-caret"></i>
+                    </a>
+                    <div class="collapse" id="mascotasSubmenu">
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link" href="Mascotas.aspx"><i class="bi bi-heart-fill"></i><span>Ver Mascotas</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="Razas.aspx"><i class="bi bi-gem"></i><span>Razas</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="Especies.aspx"><i class="bi bi-tags-fill"></i><span>Especies</span></a></li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Collapsible Menu: Empleados -->
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#empleadosSubmenu" role="button" aria-expanded="false" aria-controls="empleadosSubmenu">
+                        <i class="bi bi-briefcase-fill"></i><span>Empleados</span>
+                        <i class="bi bi-chevron-down dropdown-caret"></i>
+                    </a>
+                    <div class="collapse" id="empleadosSubmenu">
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link" href="Empleados.aspx"><i class="bi bi-briefcase-fill"></i><span>Ver Empleados</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="Roles.aspx"><i class="bi bi-person-badge-fill"></i><span>Roles</span></a></li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Collapsible Menu: Servicios -->
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#serviciosSubmenu" role="button" aria-expanded="false" aria-controls="serviciosSubmenu">
+                        <i class="bi bi-tools"></i><span>Servicios</span>
+                        <i class="bi bi-chevron-down dropdown-caret"></i>
+                    </a>
+                    <div class="collapse" id="serviciosSubmenu">
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link" href="Servicios.aspx"><i class="bi bi-tools"></i><span>Ver Servicios</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="CategoriasProductos.aspx"><i class="bi bi-boxes"></i><span>Cat. Productos</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="Subcategoria.aspx"><i class="bi bi-box-seam-fill"></i><span>Subcategorías</span></a></li>
+                        </ul>
+                    </div>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="Citas.aspx">
+                        <i class="bi bi-calendar-check-fill"></i><span>Citas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="CitaServicios.aspx">
+                        <i class="bi bi-clipboard-check-fill"></i><span>Cita-Servicios</span>
+                    </a>
+                </li>
             </ul>
         </nav>
 
-        <!-- Área de Contenido Principal -->
-        <div class="content">
+        <!-- Backdrop for mobile sidebar overlay -->
+        <div id="sidebarBackdrop" class="sidebar-backdrop"></div> 
+
+        <!-- Main Content Area -->
+        <div class="content" id="mainContent">
             <h2 class="mb-4">Dashboard</h2>
             <hr />
 
-            <!-- Tarjetas de Resumen -->
+            <!-- Summary Cards -->
             <div class="row g-4 mb-5">
-                <!-- Tarjeta Total Clientes -->
+                <!-- Total Clients Card -->
                 <div class="col-md-6 col-lg-3">
                     <div class="card text-center">
                         <div class="card-header">
@@ -133,12 +475,12 @@
                             <h3 class="card-title">
                                 <asp:Label ID="lblTotalClientes" runat="server" Text="0"></asp:Label>
                             </h3>
-                            <p class="card-text text-muted">Total de clientes en tu base de datos.</p>
+                            <p class="card-text text-muted">Total de clientes.</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tarjeta Total Mascotas -->
+                <!-- Total Pets Card -->
                 <div class="col-md-6 col-lg-3">
                     <div class="card text-center">
                         <div class="card-header">
@@ -153,7 +495,7 @@
                     </div>
                 </div>
 
-                <!-- Tarjeta Total Empleados -->
+                <!-- Total Employees Card -->
                 <div class="col-md-6 col-lg-3">
                     <div class="card text-center">
                         <div class="card-header">
@@ -163,12 +505,12 @@
                             <h3 class="card-title">
                                 <asp:Label ID="lblTotalEmpleados" runat="server" Text="0"></asp:Label>
                             </h3>
-                            <p class="card-text text-muted">Personal veterinario y asistente.</p>
+                            <p class="card-text text-muted">Personal existente.</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tarjeta Citas Pendientes Hoy -->
+                <!-- Pending Appointments Today Card -->
                 <div class="col-md-6 col-lg-3">
                     <div class="card text-center">
                         <div class="card-header">
@@ -184,23 +526,9 @@
                 </div>
             </div>
 
-            <!-- Sección de Gráficos Existentes -->
+            <!-- Charts Section -->
             <div class="row g-4 mb-5">
-                <!-- Gráfico de Barras: Servicios por Subcategoría -->
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-header">
-                            Servicios Registrados por Subcategoría
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="serviciosSubcategoriaChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gráfico de Líneas: Citas por Mes -->
+                <!-- Line Chart: Appointments per Month -->
                 <div class="col-lg-6">
                     <div class="card">
                         <div class="card-header">
@@ -213,11 +541,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Nuevos Gráficos -->
-            <div class="row g-4 mb-5">
-                <!-- Gráfico de Donas: Mascotas por Especie -->
+                <!-- Doughnut Chart: Pets by Species -->
                 <div class="col-lg-6">
                     <div class="card">
                         <div class="card-header">
@@ -230,8 +555,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Gráfico de Barras: Top 5 Servicios Más Utilizados -->
+            <div class="row g-4 mb-5">
+                 <!-- Bar Chart: Top 5 Most Used Services -->
                 <div class="col-lg-6">
                     <div class="card">
                         <div class="card-header">
@@ -244,10 +571,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Nuevo Gráfico de Empleados con Más Citas -->
-            <div class="row g-4 mb-5">
+                <!-- Bar Chart: Top 5 Employees with Most Appointments -->
                 <div class="col-lg-6">
                     <div class="card">
                         <div class="card-header">
@@ -260,31 +584,54 @@
                         </div>
                     </div>
                 </div>
-                 <div class="col-lg-6">
-                    <!-- Espacio en blanco o para otro gráfico futuro si se desea -->
-                </div>
             </div>
 
-
-            <!-- Sección de Próximas Citas -->
-            <div class="row">
+            <!-- Upcoming Appointments Section -->
+            <div class="row mb-5">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
                             Próximas Citas
                         </div>
                         <div class="card-body">
-                            <asp:GridView ID="gvProximasCitas" runat="server" AutoGenerateColumns="False"
-                                CssClass="table table-striped table-bordered table-hover"
-                                HeaderStyle-CssClass="table-primary">
-                                <Columns>
-                                    <asp:BoundField DataField="Fecha" HeaderText="Fecha" DataFormatString="{0:dd/MM/yyyy}" />
-                                    <asp:BoundField DataField="NombreMascota" HeaderText="Mascota" />
-                                    <asp:BoundField DataField="NombreCliente" HeaderText="Cliente" />
-                                    <asp:BoundField DataField="NombreEmpleado" HeaderText="Empleado" />
-                                </Columns>
-                            </asp:GridView>
-                            <asp:Label ID="lblNoCitas" runat="server" Text="No hay citas próximas programadas." Visible="false" CssClass="text-muted"></asp:Label>
+                            <asp:Repeater ID="rptProximasCitas" runat="server">
+                                <HeaderTemplate>
+                                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"> <%-- Columnas responsivas para tarjetas --%>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <div class="col">
+                                        <div class="cita-card">
+                                            <div class="cita-card-header">
+                                                <span class="client-info">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                                                        <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                                                    </svg>
+                                                    <span class="label">Cliente:</span> <%# Eval("NombreCliente") %>
+                                                </span>
+                                                <span class="date-bubble"><%# Eval("Fecha", "{0:dd MMM.yyyy}") %></span> <%-- Formato de fecha mejorado --%>
+                                            </div>
+                                            <div class="cita-card-body">
+                                                <p>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-paw-fill" viewBox="0 0 16 16">
+                                                        <path d="M2.544 5.034c.005.011.021.045.048.096L.516 8.52A.7.7 0 0 0 .54 9.573c.123.473.539.815 1.054.815.228 0 .437-.083.593-.236q.107-.107.207-.21l2.427-2.426C4.858 7.327 5.119 8 5.75 8s.892.673 1.25.75L7.22 8.94c.091.229.176.452.26.666.303.77.892 1.597 2.054 1.597 1.066 0 1.96-1.127 2.274-2.22l.5-.833.011-.018c.003-.006.009-.022.036-.068.041-.073.094-.16.155-.26.216-.367.43-.75.643-1.077C14.735 6.012 15 5.561 15 4.887c0-.585-.34-1.228-.972-1.288-.363-.035-.747.098-1.092.355L12.43 4.29l-.265 2.148c-.021.173-.1.353-.223.532-.14.205-.306.402-.505.58-.23.2-.497.35-.8.43-.226.06-.463.09-.705.09-.272 0-.528-.05-.75-.15-.22-.1-.407-.23-.55-.38-.073-.075-.143-.153-.2-.23-.056-.077-.104-.155-.14-.223-.016-.03-.028-.05-.034-.055-.02-.016-.027-.018-.031-.019C8.046 5.483 8.356 3.65 6.64 2.893 4.544 1.956 2.015 2.17 1.545 3.023c-.346.634-.143 1.34.417 1.97zM5.5 5.5c-.828 0-1.5-.672-1.5-1.5S4.672 2.5 5.5 2.5s1.5.672 1.5 1.5S6.328 5.5 5.5 5.5z"/>
+                                                    </svg>
+                                                    <span class="label">Mascota:</span> <%# Eval("NombreMascota") %>
+                                                </p>
+                                            </div>
+                                            <div class="cita-card-footer">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-badge-fill" viewBox="0 0 16 16">
+                                                    <path d="M2 2a2 2 0 0 0-2 2v12l4-1.5 4 1.5 4-1.5 4 1.5V4a2 2 0 0 0-2-2zM4.5 0A2.5 2.5 0 0 0 2 2.5C2 3.75 3 5 4.5 5s2.5-1.25 2.5-2.5A2.5 2.5 0 0 0 4.5 0"/>
+                                                </svg>
+                                                <span class="label">Atendido por:</span> <%# Eval("NombreEmpleado") %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ItemTemplate>
+                                <FooterTemplate>
+                                    </div> <%-- Close row for columns --%>
+                                </FooterTemplate>
+                            </asp:Repeater>
+                            <asp:Label ID="lblNoCitas" runat="server" Text="No hay citas próximas programadas." Visible="false" CssClass="no-citas-message"></asp:Label>
                         </div>
                     </div>
                 </div>
@@ -296,88 +643,96 @@
         <!-- Chart.js CDN -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
-            // Función JavaScript para dibujar el gráfico de Servicios por Subcategoría
-            function drawServiciosSubcategoriaChart(labels, data) {
-                const ctx = document.getElementById('serviciosSubcategoriaChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Número de Servicios',
-                            data: data,
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.6)',
-                                'rgba(54, 162, 235, 0.6)',
-                                'rgba(255, 206, 86, 0.6)',
-                                'rgba(75, 192, 192, 0.6)',
-                                'rgba(153, 102, 255, 0.6)',
-                                'rgba(255, 159, 64, 0.6)',
-                                'rgba(192, 192, 192, 0.6)', // Color adicional
-                                'rgba(201, 203, 207, 0.6)'  // Color adicional
-                            ],
-                            borderColor: [
-                                'rgba(255, 99, 132, 1)',
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(255, 206, 86, 1)',
-                                'rgba(75, 192, 192, 1)',
-                                'rgba(153, 102, 255, 1)',
-                                'rgba(255, 159, 64, 1)',
-                                'rgba(192, 192, 192, 1)',
-                                'rgba(201, 203, 207, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false, // Permitir que el chart-container controle el tamaño
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Cantidad de Servicios'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Subcategoría'
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false // No mostrar leyenda para una sola serie de datos en barras
-                            },
-                            title: {
-                                display: true,
-                                text: 'Distribución de Servicios por Subcategoría'
-                            }
-                        }
-                    }
-                });
+            // Global variables to store chart instances
+            let myCitasChart;
+            let myMascotasChart;
+            let myTopServiciosChart;
+            let myTopEmpleadosChart;
+
+            // Global storage for chart data (populated by C# ScriptManager calls)
+            window.chartData = {
+                citas: { labels: [], data: [] },
+                mascotas: { labels: [], data: [] },
+                servicios: { labels: [], data: [] },
+                empleados: { labels: [], data: [] }
+            };
+
+            // Function to draw all charts (called by C# after data is ready)
+            function drawAllCharts() {
+                drawCitasMesChart(window.chartData.citas.labels, window.chartData.citas.data);
+                drawMascotasEspecieChart(window.chartData.mascotas.labels, window.chartData.mascotas.data);
+                drawTopServiciosChart(window.chartData.servicios.labels, window.chartData.servicios.data);
+                drawTopEmpleadosChart(window.chartData.empleados.labels, window.chartData.empleados.data);
             }
 
-            // Función JavaScript para dibujar el gráfico de Citas por Mes
+            // Event listener for DOM content loaded
+            document.addEventListener('DOMContentLoaded', function () {
+                const sidebarToggle = document.getElementById('sidebarToggle');
+                const sidebar = document.getElementById('sidebarMenu');
+                const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+                // Sidebar toggle logic for mobile screens
+                if (sidebarToggle && sidebar && sidebarBackdrop) {
+                    sidebarToggle.addEventListener('click', function () {
+                        sidebar.classList.toggle('show');
+                        sidebarBackdrop.classList.toggle('show');
+                        document.body.classList.toggle('overflow-hidden');
+                    });
+
+                    sidebarBackdrop.addEventListener('click', function () {
+                        sidebar.classList.remove('show');
+                        sidebarBackdrop.classList.remove('show');
+                        document.body.classList.remove('overflow-hidden');
+                    });
+
+                    // Close sidebar on link click (important for mobile UX)
+                    sidebar.querySelectorAll('.nav-link').forEach(link => {
+                        link.addEventListener('click', function () {
+                            if (window.innerWidth < 768) {
+                                // If it's a collapse toggle link, don't close the sidebar immediately.
+                                if (!this.hasAttribute('data-bs-toggle') || this.getAttribute('data-bs-toggle') !== 'collapse') {
+                                    sidebar.classList.remove('show');
+                                    sidebarBackdrop.classList.remove('show');
+                                    document.body.classList.remove('overflow-hidden');
+                                }
+                            }
+                        });
+                    });
+                }
+            });
+
+            // --- Chart Drawing Functions (unchanged, using light mode colors) ---
+
             function drawCitasMesChart(labels, data) {
+                window.chartData.citas.labels = labels;
+                window.chartData.citas.data = data;
+                if (!labels || labels.length === 0 || !data || data.length === 0) {
+                    console.warn("CitasMesChart: No data provided or data is empty. Chart will not be drawn.");
+                    if (myCitasChart) myCitasChart.destroy();
+                    return;
+                }
                 const ctx = document.getElementById('citasMesChart').getContext('2d');
-                new Chart(ctx, {
+                const borderColor = 'rgba(13, 110, 253, 1)';
+                const backgroundColor = 'rgba(13, 110, 253, 0.2)';
+                const textColor = '#212529';
+                const gridColor = 'rgba(0,0,0,0.1)';
+                const tickColor = '#6c757d';
+                if (myCitasChart) myCitasChart.destroy();
+                myCitasChart = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [{
                             label: 'Citas Programadas',
                             data: data,
-                            borderColor: 'rgba(13, 110, 253, 1)', // Color azul de Bootstrap
-                            backgroundColor: 'rgba(13, 110, 253, 0.2)', // Fondo suave
-                            tension: 0.3, // Suaviza las líneas
+                            borderColor: borderColor,
+                            backgroundColor: backgroundColor,
+                            tension: 0.3,
                             fill: true,
-                            pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+                            pointBackgroundColor: borderColor,
                             pointBorderColor: '#fff',
                             pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(13, 110, 253, 1)'
+                            pointHoverBorderColor: borderColor
                         }]
                     },
                     options: {
@@ -386,51 +741,47 @@
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Número de Citas'
-                                }
+                                title: { display: true, text: 'Número de Citas', color: textColor },
+                                ticks: { color: tickColor },
+                                grid: { color: gridColor }
                             },
                             x: {
-                                title: {
-                                    display: true,
-                                    text: 'Mes'
-                                }
+                                title: { display: true, text: 'Mes', color: textColor },
+                                ticks: { color: tickColor },
+                                grid: { color: gridColor }
                             }
                         },
                         plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Tendencia de Citas por Mes'
-                            }
+                            legend: { display: true, position: 'top', labels: { color: textColor } },
+                            title: { display: true, text: 'Tendencia de Citas por Mes', color: textColor }
                         }
                     }
                 });
             }
 
-            // Función JavaScript para dibujar el gráfico de Donas: Mascotas por Especie
             function drawMascotasEspecieChart(labels, data) {
+                window.chartData.mascotas.labels = labels;
+                window.chartData.mascotas.data = data;
+                if (!labels || labels.length === 0 || !data || data.length === 0) {
+                    console.warn("MascotasEspecieChart: No data provided or data is empty. Chart will not be drawn.");
+                    if (myMascotasChart) myMascotasChart.destroy();
+                    return;
+                }
                 const ctx = document.getElementById('mascotasEspecieChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'doughnut', // Tipo de gráfico: dona (donut)
+                const textColor = '#212529';
+                const borderColor = '#fff';
+                if (myMascotasChart) myMascotasChart.destroy();
+                myMascotasChart = new Chart(ctx, {
+                    type: 'doughnut',
                     data: {
                         labels: labels,
                         datasets: [{
                             label: 'Cantidad de Mascotas',
                             data: data,
                             backgroundColor: [
-                                'rgba(255, 159, 64, 0.6)',  // Naranja
-                                'rgba(75, 192, 192, 0.6)',  // Verde azulado
-                                'rgba(255, 99, 132, 0.6)',  // Rojo
-                                'rgba(54, 162, 235, 0.6)',  // Azul
-                                'rgba(153, 102, 255, 0.6)', // Púrpura
-                                'rgba(201, 203, 207, 0.6)'  // Gris
+                                'rgba(255, 159, 64, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(201, 203, 207, 0.8)'
                             ],
-                            borderColor: '#fff', // Borde blanco entre segmentos
+                            borderColor: borderColor,
                             borderWidth: 2
                         }]
                     },
@@ -438,23 +789,27 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                position: 'right', // Leyenda a la derecha
-                                align: 'start'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Distribución de Mascotas por Especie'
-                            }
+                            legend: { position: 'right', align: 'start', labels: { color: textColor } },
+                            title: { display: true, text: 'Distribución de Mascotas por Especie', color: textColor }
                         }
                     }
                 });
             }
 
-            // Función JavaScript para dibujar el gráfico de Barras: Top 5 Servicios Más Utilizados
             function drawTopServiciosChart(labels, data) {
+                window.chartData.servicios.labels = labels;
+                window.chartData.servicios.data = data;
+                if (!labels || labels.length === 0 || !data || data.length === 0) {
+                    console.warn("TopServiciosChart: No data provided or data is empty. Chart will not be drawn.");
+                    if (myTopServiciosChart) myTopServiciosChart.destroy();
+                    return;
+                }
                 const ctx = document.getElementById('topServiciosChart').getContext('2d');
-                new Chart(ctx, {
+                const textColor = '#212529';
+                const gridColor = 'rgba(0,0,0,0.1)';
+                const tickColor = '#6c757d';
+                if (myTopServiciosChart) myTopServiciosChart.destroy();
+                myTopServiciosChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
@@ -462,58 +817,53 @@
                             label: 'Veces Utilizado',
                             data: data,
                             backgroundColor: [
-                                'rgba(0, 123, 255, 0.6)',  // Azul de Bootstrap
-                                'rgba(40, 167, 69, 0.6)',  // Verde de Bootstrap
-                                'rgba(255, 193, 7, 0.6)',  // Amarillo de Bootstrap
-                                'rgba(220, 53, 69, 0.6)',  // Rojo de Bootstrap
-                                'rgba(108, 117, 125, 0.6)' // Gris de Bootstrap
+                                'rgba(0, 123, 255, 0.7)', 'rgba(40, 167, 69, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(220, 53, 69, 0.7)', 'rgba(108, 117, 125, 0.7)'
                             ],
                             borderColor: [
-                                'rgba(0, 123, 255, 1)',
-                                'rgba(40, 167, 69, 1)',
-                                'rgba(255, 193, 7, 1)',
-                                'rgba(220, 53, 69, 1)',
-                                'rgba(108, 117, 125, 1)'
+                                'rgba(0, 123, 255, 1)', 'rgba(40, 167, 69, 1)', 'rgba(255, 193, 7, 1)', 'rgba(220, 53, 69, 1)', 'rgba(108, 117, 125, 1)'
                             ],
                             borderWidth: 1
                         }]
                     },
                     options: {
-                        indexAxis: 'y', // Hace el gráfico de barras horizontal
+                        indexAxis: 'y',
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
                             x: {
                                 beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Número de Utilizaciones'
-                                }
+                                title: { display: true, text: 'Número de Utilizaciones', color: textColor },
+                                ticks: { color: tickColor },
+                                grid: { color: gridColor }
                             },
                             y: {
-                                title: {
-                                    display: true,
-                                    text: 'Servicio'
-                                }
+                                title: { display: true, text: 'Servicio', color: textColor },
+                                ticks: { color: tickColor },
+                                grid: { color: gridColor }
                             }
                         },
                         plugins: {
-                            legend: {
-                                display: false
-                            },
-                            title: {
-                                display: true,
-                                text: 'Top 5 Servicios Más Utilizados'
-                            }
+                            legend: { display: false },
+                            title: { display: true, text: 'Top 5 Servicios Más Utilizados', color: textColor }
                         }
                     }
                 });
             }
 
-            // Función JavaScript para dibujar el gráfico de Barras: Top 5 Empleados con Más Citas (NUEVO)
             function drawTopEmpleadosChart(labels, data) {
+                window.chartData.empleados.labels = labels;
+                window.chartData.empleados.data = data;
+                if (!labels || labels.length === 0 || !data || data.length === 0) {
+                    console.warn("TopEmpleadosChart: No data provided or data is empty. Chart will not be drawn.");
+                    if (myTopEmpleadosChart) myTopEmpleadosChart.destroy();
+                    return;
+                }
                 const ctx = document.getElementById('topEmpleadosChart').getContext('2d');
-                new Chart(ctx, {
+                const textColor = '#212529';
+                const gridColor = 'rgba(0,0,0,0.1)';
+                const tickColor = '#6c757d';
+                if (myTopEmpleadosChart) myTopEmpleadosChart.destroy();
+                myTopEmpleadosChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
@@ -521,49 +871,34 @@
                             label: 'Número de Citas',
                             data: data,
                             backgroundColor: [
-                                'rgba(111, 66, 193, 0.6)', // Púrpura similar al btn-custom
-                                'rgba(23, 162, 184, 0.6)', // Teal
-                                'rgba(253, 126, 20, 0.6)', // Naranja oscuro
-                                'rgba(102, 16, 242, 0.6)', // Púrpura más oscuro
-                                'rgba(32, 201, 151, 0.6)'  // Verde menta
+                                'rgba(111, 66, 193, 0.7)', 'rgba(23, 162, 184, 0.7)', 'rgba(253, 126, 20, 0.7)', 'rgba(102, 16, 242, 0.7)', 'rgba(32, 201, 151, 0.7)'
                             ],
                             borderColor: [
-                                'rgba(111, 66, 193, 1)',
-                                'rgba(23, 162, 184, 1)',
-                                'rgba(253, 126, 20, 1)',
-                                'rgba(102, 16, 242, 1)',
-                                'rgba(32, 201, 151, 1)'
+                                'rgba(111, 66, 193, 1)', 'rgba(23, 162, 184, 1)', 'rgba(253, 126, 20, 1)', 'rgba(102, 16, 242, 1)', 'rgba(32, 201, 151, 1)'
                             ],
                             borderWidth: 1
                         }]
                     },
                     options: {
-                        indexAxis: 'y', // Hace el gráfico de barras horizontal
+                        indexAxis: 'y',
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
                             x: {
                                 beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Cantidad de Citas'
-                                }
+                                title: { display: true, text: 'Cantidad de Citas', color: textColor },
+                                ticks: { color: tickColor },
+                                grid: { color: gridColor }
                             },
                             y: {
-                                title: {
-                                    display: true,
-                                    text: 'Empleado'
-                                }
+                                title: { display: true, text: 'Empleado', color: textColor },
+                                ticks: { color: tickColor },
+                                grid: { color: gridColor }
                             }
                         },
                         plugins: {
-                            legend: {
-                                display: false
-                            },
-                            title: {
-                                display: true,
-                                text: 'Top 5 Empleados con Más Citas'
-                            }
+                            legend: { display: false },
+                            title: { display: true, text: 'Top 5 Empleados con Más Citas', color: textColor }
                         }
                     }
                 });

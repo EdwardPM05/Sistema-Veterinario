@@ -34,8 +34,8 @@ namespace VetWeb
                 lblTotalMascotas.Text = GetTotalCount("Mascotas", "MascotaID").ToString();
                 lblTotalEmpleados.Text = GetTotalCount("Empleados", "EmpleadoID").ToString();
                 lblCitasPendientesHoy.Text = GetCitasCountToday().ToString();
-                CargarProximasCitas();
-                CargarDatosGraficos(); // Nueva función para cargar datos de gráficos
+                CargarProximasCitas(); // Ahora carga en el Repeater
+                CargarDatosGraficos();
             }
             catch (Exception ex)
             {
@@ -95,7 +95,7 @@ namespace VetWeb
         }
 
         /// <summary>
-        /// Carga una lista de las próximas citas (ej. de hoy en adelante) y las enlaza al GridView.
+        /// Carga una lista de las próximas citas (ej. de hoy en adelante) y las enlaza al Repeater.
         /// </summary>
         private void CargarProximasCitas()
         {
@@ -120,14 +120,14 @@ namespace VetWeb
 
                 if (dt.Rows.Count > 0)
                 {
-                    gvProximasCitas.DataSource = dt;
-                    gvProximasCitas.DataBind();
-                    gvProximasCitas.Visible = true;
+                    rptProximasCitas.DataSource = dt; // Enlazar al Repeater
+                    rptProximasCitas.DataBind();
+                    rptProximasCitas.Visible = true;
                     lblNoCitas.Visible = false;
                 }
                 else
                 {
-                    gvProximasCitas.Visible = false;
+                    rptProximasCitas.Visible = false; // Ocultar el Repeater
                     lblNoCitas.Visible = true;
                 }
             }
@@ -138,15 +138,6 @@ namespace VetWeb
         /// </summary>
         private void CargarDatosGraficos()
         {
-            // Datos para el gráfico de Servicios por Subcategoría
-            Dictionary<string, int> serviciosPorSubcategoria = GetServiciosCountBySubcategoria();
-            string labelsServicios = new JavaScriptSerializer().Serialize(new List<string>(serviciosPorSubcategoria.Keys));
-            string dataServicios = new JavaScriptSerializer().Serialize(new List<int>(serviciosPorSubcategoria.Values));
-
-            // Registra el script para dibujar el gráfico de servicios
-            ScriptManager.RegisterStartupScript(this, this.GetType(), "drawServiciosChart",
-                $"drawServiciosSubcategoriaChart({labelsServicios}, {dataServicios});", true);
-
             // Datos para el gráfico de Citas por Mes
             Tuple<List<string>, List<int>> citasData = GetCitasCountPerMonth(6); // Últimos 6 meses
             string labelsCitas = new JavaScriptSerializer().Serialize(citasData.Item1); // Accede a la lista de etiquetas
@@ -156,7 +147,7 @@ namespace VetWeb
             ScriptManager.RegisterStartupScript(this, this.GetType(), "drawCitasChart",
                 $"drawCitasMesChart({labelsCitas}, {dataCitas});", true);
 
-            // Datos para el gráfico de Mascotas por Especie (Nuevo)
+            // Datos para el gráfico de Mascotas por Especie
             Dictionary<string, int> mascotasPorEspecie = GetMascotasCountByEspecie();
             string labelsMascotasEspecie = new JavaScriptSerializer().Serialize(new List<string>(mascotasPorEspecie.Keys));
             string dataMascotasEspecie = new JavaScriptSerializer().Serialize(new List<int>(mascotasPorEspecie.Values));
@@ -164,7 +155,7 @@ namespace VetWeb
             ScriptManager.RegisterStartupScript(this, this.GetType(), "drawMascotasEspecieChart",
                 $"drawMascotasEspecieChart({labelsMascotasEspecie}, {dataMascotasEspecie});", true);
 
-            // Datos para el gráfico de Top 5 Servicios Más Utilizados (Nuevo)
+            // Datos para el gráfico de Top 5 Servicios Más Utilizados
             Dictionary<string, int> topServicios = GetTopServiciosUtilizados(5);
             string labelsTopServicios = new JavaScriptSerializer().Serialize(new List<string>(topServicios.Keys));
             string dataTopServicios = new JavaScriptSerializer().Serialize(new List<int>(topServicios.Values));
@@ -172,7 +163,7 @@ namespace VetWeb
             ScriptManager.RegisterStartupScript(this, this.GetType(), "drawTopServiciosChart",
                 $"drawTopServiciosChart({labelsTopServicios}, {dataTopServicios});", true);
 
-            // Datos para el gráfico de Top 5 Empleados con Más Citas (NUEVO)
+            // Datos para el gráfico de Top 5 Empleados con Más Citas
             Tuple<List<string>, List<int>> topEmpleadosData = GetTopEmpleadosConCitas(5);
             string labelsTopEmpleados = new JavaScriptSerializer().Serialize(topEmpleadosData.Item1);
             string dataTopEmpleados = new JavaScriptSerializer().Serialize(topEmpleadosData.Item2);
@@ -181,38 +172,7 @@ namespace VetWeb
                 $"drawTopEmpleadosChart({labelsTopEmpleados}, {dataTopEmpleados});", true);
         }
 
-        /// <summary>
-        /// Obtiene el conteo de servicios agrupados por subcategoría.
-        /// </summary>
-        /// <returns>Un diccionario con el nombre de la subcategoría y la cantidad de servicios.</returns>
-        private Dictionary<string, int> GetServiciosCountBySubcategoria()
-        {
-            Dictionary<string, int> data = new Dictionary<string, int>();
-            using (SqlConnection con = new SqlConnection(cadena))
-            {
-                // Unir Servicios con Subcategoria para obtener el nombre de la subcategoría.
-                // Usamos ISNULL para mostrar 'Sin Subcategoría' si SubcategoriaID es NULL.
-                string query = @"
-                    SELECT 
-                        ISNULL(SC.Nombre, 'Sin Subcategoría') AS NombreSubcategoria, 
-                        COUNT(S.ServicioID) AS TotalServicios
-                    FROM Servicios S
-                    LEFT JOIN Subcategoria SC ON S.SubcategoriaID = SC.SubcategoriaID
-                    GROUP BY ISNULL(SC.Nombre, 'Sin Subcategoría')
-                    ORDER BY TotalServicios DESC";
-
-                SqlCommand cmd = new SqlCommand(query, con);
-                con.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    data.Add(reader["NombreSubcategoria"].ToString(), Convert.ToInt32(reader["TotalServicios"]));
-                }
-                reader.Close();
-                con.Close();
-            }
-            return data;
-        }
+        // Se eliminó el método GetServiciosCountBySubcategoria() ya que el gráfico fue removido.
 
         /// <summary>
         /// Obtiene el conteo de citas por mes para los últimos N meses, asegurando el orden cronológico.
@@ -279,7 +239,7 @@ namespace VetWeb
         }
 
         /// <summary>
-        /// Obtiene el conteo de mascotas agrupadas por especie. (NUEVO)
+        /// Obtiene el conteo de mascotas agrupadas por especie.
         /// </summary>
         /// <returns>Un diccionario con el nombre de la especie y la cantidad de mascotas.</returns>
         private Dictionary<string, int> GetMascotasCountByEspecie()
@@ -311,7 +271,7 @@ namespace VetWeb
         }
 
         /// <summary>
-        /// Obtiene el top N de servicios más utilizados (basado en CitaServicios). (NUEVO)
+        /// Obtiene el top N de servicios más utilizados (basado en CitaServicios).
         /// </summary>
         /// <param name="topN">El número de servicios a obtener.</param>
         /// <returns>Un diccionario con el nombre del servicio y la cantidad de veces utilizado.</returns>
@@ -320,10 +280,6 @@ namespace VetWeb
             Dictionary<string, int> data = new Dictionary<string, int>();
             using (SqlConnection con = new SqlConnection(cadena))
             {
-                // Sumamos la cantidad de veces que un servicio aparece en CitaServicios (podría ser por Cantidad si se vende más de 1)
-                // O si solo queremos contar cuántas veces se ha registrado un servicio en una cita (independiente de la cantidad),
-                // COUNT(CS.CitaServicioID) sería suficiente y más directo.
-                // Aquí lo haré contando el número de registros en CitaServicios para cada servicio.
                 string query = $@"
                     SELECT TOP {topN}
                         S.NombreServicio, 
@@ -347,7 +303,7 @@ namespace VetWeb
         }
 
         /// <summary>
-        /// Obtiene el top N de empleados con más citas. (NUEVO)
+        /// Obtiene el top N de empleados con más citas.
         /// </summary>
         /// <param name="topN">El número de empleados a obtener.</param>
         /// <returns>Un Tuple donde Item1 es la lista de nombres de empleados y Item2 es la lista de conteos de citas.</returns>
