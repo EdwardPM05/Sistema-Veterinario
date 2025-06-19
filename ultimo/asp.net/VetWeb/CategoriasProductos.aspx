@@ -7,82 +7,219 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <style>
+        /* Global box-sizing for consistent layout */
+        html, body {
+            box-sizing: border-box;
+        }
+        *, *::before, *::after {
+            box-sizing: inherit;
+        }
+
+        /* Definición de variables CSS para colores (Paleta: Elegante y Moderna - Tonos Gris Azulado y Toques de Blanco/Plata) */
+        :root {
+            --body-bg: #F0F2F5; /* Fondo principal gris claro muy suave */
+            --text-color: #333333; /* Texto general gris oscuro */
+
+            --sidebar-bg: #2C3E50; /* Fondo de la barra lateral: Gris azulado oscuro */
+            --sidebar-text: #EAECEE; /* Color de texto del sidebar: Gris muy claro */
+            --sidebar-hover-bg: #34495E; /* Fondo al pasar el mouse por el sidebar: Gris azulado medio */
+            --sidebar-hover-text: #FFFFFF; /* Texto al pasar el mouse por el sidebar: Blanco */
+            
+            --card-bg: #FFFFFF; /* Fondo de tarjeta: Blanco puro */
+            --card-shadow: rgba(0,0,0,0.05); /* Sombra de tarjeta muy sutil */
+            --card-header-bg: #5A7F9D; /* Encabezado de tarjeta/tabla/modal: Gris azulado más claro */
+            --card-number-color: #343a40; /* Color de número de tarjeta (se mantiene oscuro para contraste) */
+            
+            /* Colores para alertas y botones de formulario específicos */
+            --btn-custom-bg: #5A7F9D; /* Gris azulado más claro para botones principales */
+            --btn-custom-hover-bg: #4A6572; /* Gris azulado ligeramente más oscuro */
+            --btn-clear-bg: #95A5A6; /* Gris Plata para "Limpiar" */
+            --btn-clear-hover-bg: #7F8C8D; /* Gris Plata más oscuro */
+            --form-control-focus-border: #5A7F9D; /* Borde de foco para input */
+            --form-control-focus-shadow: rgba(90, 127, 157, 0.25); /* Sombra de foco para input */
+            --alert-success-bg: #d4edda;
+            --alert-success-color: #155724;
+            --alert-success-border: #badbcc;
+            --alert-danger-bg: #f8d7da;
+            --alert-danger-color: #721c24;
+            --alert-danger-border: #f5c6cb;
+            --alert-success-icon-color: #28a745; /* Verde de Bootstrap para el ícono de éxito */
+            --alert-danger-icon-color: #DC3545; /* Rojo de Bootstrap para el ícono de peligro */
+        }
+
         body {
             min-height: 100vh;
-            overflow-x: hidden;
-            font-family: 'Inter', sans-serif; /* Using Inter font */
-            background-color: #f8f9fa; /* Light background */
+            overflow-x: hidden; /* Prevent horizontal scroll for the entire body */
+            font-family: 'Inter', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            padding-left: 220px; /* Space for fixed sidebar on desktop */
         }
+        
+        /* Sidebar styling for desktop/tablet */
         .sidebar {
             position: fixed;
             top: 0;
-            left: 0;
-            height: 100vh;
             width: 220px;
-            background-color: #343a40;
+            height: 100vh;
+            background-color: var(--sidebar-bg);
             padding-top: 1rem;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Subtle shadow */
+            box-shadow: 2px 0 5px var(--card-shadow);
+            overflow-y: auto; /* Scrollbar appears only when content overflows vertically */
+            overflow-x: hidden; /* **CRITICAL: Ensure no horizontal scrollbar within sidebar** */
+            z-index: 1030; /* Higher than content */
+            transition: left 0.3s ease; /* Smooth transition for sliding */
+            left: 0; /* Default position for large screens */
         }
         .sidebar .nav-link {
-            color: #adb5bd;
+            color: var(--sidebar-text);
             font-weight: 500;
-            padding: 12px 20px;
-            transition: background-color 0.3s, color 0.3s; /* Smooth transitions */
-            border-radius: 8px; /* Rounded corners for nav links */
-            margin: 0 10px 5px 10px; /* Spacing */
+            padding: 12px 20px; /* Consistent padding-left for all nav links */
+            transition: background-color 0.3s, color 0.3s;
+            border-radius: 8px;
+            margin: 0 10px 5px 10px; /* Margin around the link item */
+            display: flex; /* Make it a flex container */
+            align-items: center; /* Vertically align items */
+            justify-content: space-between; /* Pushes caret to the right, allows space for text */
+            white-space: nowrap; /* Keep content on one line */
+            overflow: hidden; /* Hide overflow of content within the link */
+            text-overflow: ellipsis; /* Show ellipsis for overflowing text */
+        }
+        .sidebar .nav-link i { /* Style for Bootstrap Icons (main and sub-menu icons) */
+            margin-right: 10px; /* Space between icon and text */
+            font-size: 1.1rem;
+            width: 20px; /* Fixed width for icons to align text */
+            text-align: center;
+            flex-shrink: 0; /* **IMPORTANT: Prevent icon from shrinking** */
+        }
+        .sidebar .nav-link span { /* For text within nav-link */
+            flex-grow: 1; /* Allow text to grow and take available space */
+            flex-shrink: 1; /* **IMPORTANT: Allow text to shrink if necessary** */
+            min-width: 0; /* **CRITICAL: Allows flex item to shrink properly with text-overflow** */
         }
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background-color: #495057;
-            color: #fff;
+            background-color: var(--sidebar-hover-bg);
+            color: var(--sidebar-hover-text);
         }
         .sidebar-brand {
-            color: #fff;
-            font-size: 1.8rem; /* Slightly larger font */
+            color: var(--sidebar-hover-text);
+            font-size: 1.8rem;
             font-weight: 700;
             padding: 0 20px 1rem;
-            border-bottom: 1px solid #495057;
+            border-bottom: 1px solid var(--sidebar-hover-bg);
             margin-bottom: 1rem;
-            display: block;
+            display: flex; /* Para alinear el icono */
+            align-items: center; /* Para alinear el icono */
+            justify-content: center; /* Centrar el contenido de la marca */
             text-decoration: none;
+        }
+        .sidebar-brand svg {
+            margin-right: 10px;
+            font-size: 2.2rem;
+        }
+
+        /* Content area positioning for desktop/tablet */
+        .content {
+            margin-left: 0; /* Content starts after sidebar's padding-left */
+            padding: 2rem;
+            position: relative;
+        }
+        h2 {
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 10px var(--card-shadow);
+            transition: transform 0.2s ease-in-out, background-color 0.3s, box-shadow 0.3s;
+            background-color: var(--card-bg);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background-color: var(--card-header-bg);
+            color: white;
+            font-weight: 600;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            transition: background-color 0.3s;
+        }
+        .card-body h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--card-number-color);
+            transition: color 0.3s;
+        }
+        .card-text.text-muted {
+            color: var(--text-color) !important;
+        }
+
+        /* Styles for dropdown caret */
+        .dropdown-caret {
+            transition: transform 0.3s ease;
+            margin-left: 8px;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+        /* Rotate caret when collapse is open */
+        .nav-link[aria-expanded="true"] .dropdown-caret {
+            transform: rotate(-180deg);
+        }
+
+        /* Styles for collapsible sub-menu items */
+        .sidebar .nav-item .collapse .nav-item {
+            margin-left: 20px;
+            margin-bottom: 2px;
+            margin-right: 0;
+        }
+        .sidebar .nav-item .collapse .nav-link {
+            justify-content: flex-start;
+        }
+        .sidebar .nav-item .collapse .nav-link i {
+            font-size: 0.95rem;
+            width: 18px;
+            flex-shrink: 0;
+            margin-right: 8px;
             text-align: center;
         }
-        .content {
-            margin-left: 220px;
-            padding: 2rem;
-        }
+
+        /* Specific styles for forms, tables, modals */
         .btn-custom {
-            background-color: #6f42c1; /* Custom purple */
+            background-color: var(--btn-custom-bg);
             color: white;
             border-radius: 8px;
             padding: 10px 20px;
             font-size: 1.1rem;
             transition: background-color 0.3s ease;
+            border: none;
         }
         .btn-custom:hover {
-            background-color: #59359a;
+            background-color: var(--btn-custom-hover-bg);
             color: white;
         }
-        /* Table enhancements */
         .table-striped tbody tr:nth-of-type(odd) {
-            background-color: rgba(0, 0, 0, 0.03);
+            background-color: var(--card-bg); /* Use card-bg for odd rows */
         }
         .table-hover tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.075);
+            background-color: rgba(0, 0, 0, 0.04);
         }
         .table-primary th {
-            background-color: #0d6efd; /* Bootstrap primary blue */
+            background-color: var(--card-header-bg);
             color: white;
-            border-color: #0d6efd;
+            border-color: var(--card-header-bg);
         }
         .modal-header {
-            background-color: #0d6efd; /* Primary blue header */
+            background-color: var(--card-header-bg);
             color: white;
             border-top-left-radius: 10px;
             border-top-right-radius: 10px;
         }
         .modal-content {
-            border-radius: 10px; /* Rounded corners for modal */
+            border-radius: 10px;
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
         }
         .form-control {
@@ -96,148 +233,245 @@
             padding: 10px 15px;
             margin-bottom: 15px;
             font-size: 0.95rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            word-wrap: break-word;
+            white-space: normal;
         }
         .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border-color: #badbcc;
+            background-color: var(--alert-success-bg);
+            color: var(--alert-success-color);
+            border-color: var(--alert-success-border);
         }
         .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
+            background-color: var(--alert-danger-bg);
+            color: var(--alert-danger-color);
+            border-color: var(--alert-danger-border);
         }
-
-        /* Search Bar Specific Styles */
-        .search-input-group .form-control {
-            border-top-left-radius: 8px;
-            border-bottom-left-radius: 8px;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-            border-color: #ced4da; /* Default Bootstrap border */
-            box-shadow: none; /* Remove default focus shadow */
-        }
-        .search-input-group .form-control:focus {
-            border-color: #80bdff; /* Bootstrap blue focus */
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Bootstrap focus shadow */
-        }
-
-        .search-input-group .btn {
-            /* Common styles for search buttons */
-            border-radius: 0; /* Remove default radius inherited from .btn */
-            font-weight: 600; /* Slightly bolder text */
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-
-        /* Specific styles for "Buscar" button */
-        .search-input-group #btnBuscarCategoria { /* Updated ID */
-            background-color: #0d6efd; /* Primary blue */
-            color: white;
-            border-color: #0d6efd;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-        .search-input-group #btnBuscarCategoria:hover { /* Updated ID */
-            background-color: #0b5ed7; /* Darker blue on hover */
-            border-color: #0b5ed7;
-        }
-
-        /* Specific styles for "Limpiar" button */
-        .search-input-group #btnLimpiarBusquedaCategoria { /* Updated ID */
-            background-color: #6c757d; /* Secondary gray */
-            color: white;
-            border-color: #6c757d;
-            border-top-right-radius: 8px; /* Rounded corner on the far right */
-            border-bottom-right-radius: 8px;
-        }
-        .search-input-group #btnLimpiarBusquedaCategoria:hover { /* Updated ID */
-            background-color: #5c636a; /* Darker gray on hover */
-            border-color: #565e64;
-        }
-
-        /* Ensure correct border-radius for input-group buttons */
-        .search-input-group .btn:not(:last-child) {
-            border-right: 1px solid rgba(0,0,0,.125); /* Small separator between buttons */
-        }
-
-        /* Custom styles for alert messages within the modal */
-        #categoriaProductoModal .alert { /* Changed to categoriaProductoModal */
-            font-size: 1rem; /* Slightly larger text for readability */
-            padding: 0.75rem 1.25rem; /* More comfortable padding */
-            margin-top: 1rem; /* Space above the message */
-            margin-bottom: 1.5rem; /* Space below the message */
-            text-align: center; /* Center the text */
-            font-weight: 600; /* Bolder text for emphasis */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-            word-wrap: break-word; /* Ensures long words break to fit */
-            white-space: normal; /* Allows text to wrap naturally */
-        }
-
-        #categoriaProductoModal .alert-danger { /* Changed to categoriaProductoModal */
-            background-color: #f8d7da; /* Light red */
-            color: #721c24; /* Dark red text */
-            border-color: #f5c6cb; /* Red border */
-            position: relative; /* Needed for pseudo-elements */
-        }
-
-        #categoriaProductoModal .alert-danger::before { /* Changed to categoriaProductoModal */
-            content: "\2716"; /* Unicode 'heavy multiplication x' for a cross */
-            font-size: 1.2rem;
-            margin-right: 0.5rem;
-            vertical-align: middle;
-            display: inline-block;
-            line-height: 1; /* Align with text */
-            color: #dc3545; /* Bootstrap red */
-        }
-
-        #categoriaProductoModal .alert-success::before { /* Changed to categoriaProductoModal */
-            content: "\2714"; /* Unicode 'heavy check mark' */
+        .alert-danger::before {
+            content: "\2716";
             font-size: 1.2rem;
             margin-right: 0.5rem;
             vertical-align: middle;
             display: inline-block;
             line-height: 1;
-            color: #28a745; /* Bootstrap green */
+            color: var(--alert-danger-icon-color);
         }
-
-        /* Increase modal width for better display of long messages */
-        #categoriaProductoModal .modal-dialog { /* Changed to categoriaProductoModal */
-            max-width: 500px; 
-            width: 90%; /* Responsive width */
+        .alert-success::before {
+            content: "\2714";
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+            display: inline-block;
+            line-height: 1;
+            color: var(--alert-success-icon-color);
+        }
+        .search-input-group .form-control {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-color: #ced4da;
+            box-shadow: none;
+        }
+        .search-input-group .form-control:focus {
+            border-color: var(--form-control-focus-border);
+            box-shadow: 0 0 0 0.25rem var(--form-control-focus-shadow);
+        }
+        .search-input-group .btn {
+            border-radius: 0;
+            font-weight: 600;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        /* Specific IDs for search buttons. CategoriasProductos.aspx uses btnBuscarCategoria and btnLimpiarBusquedaCategoria */
+        .search-input-group #btnBuscarCategoria { 
+            background-color: var(--btn-custom-bg);
+            color: white;
+            border-color: var(--btn-custom-bg);
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .search-input-group #btnBuscarCategoria:hover {
+            background-color: var(--btn-custom-hover-bg);
+            border-color: var(--btn-custom-hover-bg);
+        }
+        .search-input-group #btnLimpiarBusquedaCategoria {
+            background-color: var(--btn-clear-bg);
+            color: white;
+            border-color: var(--btn-clear-bg);
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .search-input-group #btnLimpiarBusquedaCategoria:hover {
+            background-color: var(--btn-clear-hover-bg);
+            border-color: var(--btn-clear-hover-bg);
+        }
+        .search-input-group .btn:not(:last-child) {
+            border-right: 1px solid rgba(0,0,0,.125);
+        }
+        /* Modal width adjustments */
+        .modal-dialog {
+            max-width: 500px;
+            width: 90%;
         }
 
         @media (min-width: 576px) {
-            #categoriaProductoModal .modal-dialog {
-                max-width: 550px; 
+            .modal-dialog {
+                max-width: 550px;
             }
         }
         @media (min-width: 768px) {
-            #categoriaProductoModal .modal-dialog {
-                max-width: 600px; 
+            .modal-dialog {
+                max-width: 600px;
+            }
+        }
+
+        /* --- RESPONSIVE STYLES FOR MOBILE --- */
+        @media (max-width: 767.98px) {
+            .sidebar {
+                left: -220px;
+                box-shadow: none;
+                z-index: 1040;
+            }
+            .sidebar.show {
+                left: 0;
+                box-shadow: 2px 0 5px var(--card-shadow);
+            }
+
+            body {
+                padding-left: 0;
+                padding-top: 5rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            /* Responsive button to toggle sidebar */
+            #sidebarToggle {
+                display: flex !important;
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                z-index: 1050;
+                border-radius: 50%;
+                width: 45px;
+                height: 45px;
+                align-items: center;
+                justify-content: center;
+                background-color: var(--sidebar-bg);
+                border-color: var(--sidebar-hover-bg);
+                color: var(--sidebar-text);
+                transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+            }
+            #sidebarToggle:hover {
+                background-color: var(--sidebar-hover-bg);
+                color: var(--sidebar-hover-text);
+            }
+
+            /* Backdrop for when sidebar is open on mobile */
+            .sidebar-backdrop {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1039;
+                display: none;
+                transition: opacity 0.3s ease;
+                opacity: 0;
+            }
+            .sidebar-backdrop.show {
+                display: block;
+                opacity: 1;
+            }
+
+            /* Prevent body scrolling when sidebar is open */
+            body.overflow-hidden {
+                overflow: hidden;
             }
         }
     </style>
 </head>
 <body>
     <form id="form1" runat="server">
+        <asp:ScriptManager runat="server"></asp:ScriptManager>
+
+        <!-- Sidebar Toggle Button for Mobile -->
+        <button type="button" id="sidebarToggle" class="btn btn-primary d-md-none">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+
         <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <a href="Default.aspx" class="sidebar-brand">VetWeb</a>
+        <nav class="sidebar" id="sidebarMenu">
+            <a href="Default.aspx" class="sidebar-brand">
+                <i class="bi bi-hospital-fill"></i> VetWeb
+            </a>
             <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link" href="Default.aspx">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="Clientes.aspx">Clientes</a></li>
-                <li class="nav-item"><a class="nav-link" href="Razas.aspx">Razas</a></li>
-                <li class="nav-item"><a class="nav-link" href="Especies.aspx">Especies</a></li>
-                <li class="nav-item"><a class="nav-link" href="Mascotas.aspx">Mascotas</a></li>
-                <li class="nav-item"><a class="nav-link" href="Roles.aspx">Roles</a></li>
-                <li class="nav-item"><a class="nav-link" href="Empleados.aspx">Empleados</a></li>
-                <li class="nav-item"><a class="nav-link active" href="CategoriasProductos.aspx">Cat. Productos</a></li>
-                <li class="nav-item"><a class="nav-link" href="Subcategoria.aspx">Subcategorías</a></li>
-                <li class="nav-item"><a class="nav-link" href="Servicios.aspx">Servicios</a></li>
-                <li class="nav-item"><a class="nav-link" href="Citas.aspx">Citas</a></li>
-                <li class="nav-item"><a class="nav-link" href="CitaServicios.aspx">Cita-Servicios</a></li>
-                <li class="nav-item"><a class="nav-link" href="VentaServicios.aspx">Venta Servicios</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="Default.aspx">
+                        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="Clientes.aspx">
+                        <i class="bi bi-people-fill"></i><span>Clientes</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#mascotasSubmenu" role="button" aria-expanded="false" aria-controls="mascotasSubmenu">
+                        <i class="bi bi-heart-fill"></i><span>Mascotas</span> 
+                        <i class="bi bi-chevron-down dropdown-caret"></i>
+                    </a>
+                    <div class="collapse" id="mascotasSubmenu">
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link" href="Mascotas.aspx"><i class="bi bi-heart-fill"></i><span>Ver Mascotas</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="Razas.aspx"><i class="bi bi-gem"></i><span>Razas</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="Especies.aspx"><i class="bi bi-tags-fill"></i><span>Especies</span></a></li> 
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#empleadosSubmenu" role="button" aria-expanded="false" aria-controls="empleadosSubmenu">
+                        <i class="bi bi-briefcase-fill"></i><span>Empleados</span>
+                        <i class="bi bi-chevron-down dropdown-caret"></i>
+                    </a>
+                    <div class="collapse" id="empleadosSubmenu">
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link" href="Empleados.aspx"><i class="bi bi-briefcase-fill"></i><span>Ver Empleados</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="Roles.aspx"><i class="bi bi-person-badge-fill"></i><span>Roles</span></a></li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="collapse" href="#serviciosSubmenu" role="button" aria-expanded="true" aria-controls="serviciosSubmenu">
+                        <i class="bi bi-tools"></i><span>Servicios</span>
+                        <i class="bi bi-chevron-down dropdown-caret"></i>
+                    </a>
+                    <div class="collapse show" id="serviciosSubmenu"> <%-- 'show' class added to keep it open --%>
+                        <ul class="nav flex-column">
+                            <li class="nav-item"><a class="nav-link" href="Servicios.aspx"><i class="bi bi-tools"></i><span>Ver Servicios</span></a></li>
+                            <li class="nav-item"><a class="nav-link active" href="CategoriasProductos.aspx"><i class="bi bi-boxes"></i><span>Cat. Productos</span></a></li> <%-- Marked as active --%>
+                            <li class="nav-item"><a class="nav-link" href="Subcategoria.aspx"><i class="bi bi-box-seam-fill"></i><span>Subcategorías</span></a></li>
+                        </ul>
+                    </div>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="Citas.aspx">
+                        <i class="bi bi-calendar-check-fill"></i><span>Citas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="CitaServicios.aspx">
+                        <i class="bi bi-clipboard-check-fill"></i><span>Cita-Servicios</span>
+                    </a>
+                </li>
+
             </ul>
         </nav>
 
@@ -265,15 +499,14 @@
 
             <!-- GridView to display existing categories -->
             <asp:GridView ID="gvCategoriasProductos" runat="server" AutoGenerateColumns="False" OnRowCommand="gvCategoriasProductos_RowCommand"
-                CssClass="table table-striped table-bordered table-hover"
+                CssClass="table  table-bordered table-hover"
                 HeaderStyle-CssClass="table-primary"
-                DataKeyNames="CategoriaProductoID"> 
+                DataKeyNames="CategoriaProductoID">
                 <Columns>
-                    <%-- Removed CategoriaProductoID column from display, using DataKeyNames instead --%>
                     <asp:BoundField DataField="NombreCategoria" HeaderText="Nombre de Categoría" />
                     <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="180px">
-                        <ItemTemplate>
-                            <asp:Button ID="btnEditarCategoria" runat="server" CommandName="Editar" Text="Editar" CssClass="btn btn-warning btn-sm me-2" CommandArgument="<%# Container.DataItemIndex %>" />
+                        <ItemTemplate runat="server"> <%-- Added runat="server" explicitly --%>
+                            <asp:Button ID="btnEditarCategoria" runat="server" CommandName="Editar" Text="Editar" CssClass="btn btn-primary btn-sm me-2" CommandArgument="<%# Container.DataItemIndex %>" />
                             <asp:Button ID="btnEliminarCategoria" runat="server" CommandName="Eliminar" Text="Eliminar" CssClass="btn btn-danger btn-sm" CommandArgument="<%# Container.DataItemIndex %>" OnClientClick="return confirm('¿Está seguro de que desea eliminar esta categoría de producto?');" />
                         </ItemTemplate>
                     </asp:TemplateField>
@@ -291,7 +524,7 @@
                     </div>
                     <div class="modal-body">
                         <!-- Message Label -->
-                        <asp:Label ID="lblMensaje" runat="server" EnableViewState="false"></asp:Label><br />
+                        <asp:Label ID="lblMensaje" runat="server"></asp:Label><br /> <%-- Removed EnableViewState="false" --%>
                         
                         <!-- Input field for NombreCategoria -->
                         <div class="mb-3">
@@ -315,6 +548,50 @@
         <!-- Bootstrap JS Bundle -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
+            // JavaScript for handling the sidebar toggle on mobile
+            document.addEventListener('DOMContentLoaded', function () {
+                var sidebarToggle = document.getElementById('sidebarToggle');
+                var sidebarMenu = document.getElementById('sidebarMenu');
+                var body = document.body;
+                var sidebarBackdrop = document.createElement('div');
+                sidebarBackdrop.className = 'sidebar-backdrop';
+                document.body.appendChild(sidebarBackdrop);
+
+                // Function to toggle sidebar
+                function toggleSidebar() {
+                    sidebarMenu.classList.toggle('show');
+                    sidebarBackdrop.classList.toggle('show');
+                    body.classList.toggle('overflow-hidden'); // Prevent body scroll
+                }
+
+                if (sidebarToggle) {
+                    sidebarToggle.addEventListener('click', function () {
+                        toggleSidebar();
+                    });
+                }
+
+                if (sidebarBackdrop) {
+                    sidebarBackdrop.addEventListener('click', function () {
+                        toggleSidebar();
+                    });
+                }
+
+                // Close sidebar when a nav link is clicked on small screens
+                var navLinks = document.querySelectorAll('.sidebar .nav-link');
+                navLinks.forEach(function (link) {
+                    link.addEventListener('click', function () {
+                        if (window.innerWidth < 768) {
+                            // Check if it's a collapsible parent or a direct link
+                            var isCollapsibleParent = this.getAttribute('data-bs-toggle') === 'collapse';
+                            if (!isCollapsibleParent) {
+                                // Only close if it's not a parent of a collapsible menu
+                                toggleSidebar();
+                            }
+                        }
+                    });
+                });
+            });
+
             // JavaScript function to clear the form fields and set "Add" mode for CategoriaProducto Modal
             function clearModalFormAndSetAddModeCategoriaProducto() {
                 var txtNombreCategoria = document.getElementById('<%= txtNombreCategoria.ClientID %>');
@@ -356,12 +633,16 @@
                 var categoriaProductoModal = document.getElementById('categoriaProductoModal');
                 if (categoriaProductoModal) {
                     categoriaProductoModal.addEventListener('shown.bs.modal', function (event) {
-                        var button = event.relatedTarget; 
+                        var button = event.relatedTarget;
                         var isAddModeButton = button && button.getAttribute('data-mode') === 'add';
 
                         if (isAddModeButton) {
                             clearModalFormAndSetAddModeCategoriaProducto();
                         }
+                    });
+                    // Also clear the form when the modal is hidden
+                    categoriaProductoModal.addEventListener('hidden.bs.modal', function () {
+                        clearModalFormAndSetAddModeCategoriaProducto();
                     });
                 }
             });

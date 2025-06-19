@@ -9,7 +9,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <style>
-        /* Global box-sizing for consistent layout */
         html, body {
             box-sizing: border-box;
         }
@@ -17,18 +16,22 @@
             box-sizing: inherit;
         }
 
-        /* Definición de variables CSS para colores (solo modo claro) */
         :root {
-            --body-bg: #f8f9fa;
-            --text-color: #212529;
-            --sidebar-bg: #343a40; /* Fondo del sidebar */
-            --sidebar-text: #adb5bd; /* Color de texto del sidebar */
-            --sidebar-hover-bg: #495057; /* Fondo al pasar el mouse por el sidebar */
-            --sidebar-hover-text: #fff; /* Texto al pasar el mouse por el sidebar */
-            --card-bg: #fff;
-            --card-shadow: rgba(0,0,0,0.08);
-            --card-header-bg: #0d6efd;
-            --card-number-color: #343a40;
+            /* Paleta 3: Elegante y Moderna (Tonos Gris Azulado y Toques de Blanco/Plata) */
+            --body-bg: #F0F2F5; /* Fondo principal gris claro muy suave */
+            --text-color: #333333; /* Texto general gris oscuro */
+
+            --sidebar-bg: #2C3E50; /* Fondo de la barra lateral: Gris azulado oscuro */
+            --sidebar-text: #EAECEE; /* Color de texto del sidebar: Gris muy claro */
+            --sidebar-hover-bg: #34495E; /* Fondo al pasar el mouse por el sidebar: Gris azulado medio */
+            --sidebar-hover-text: #FFFFFF; /* Texto al pasar el mouse por el sidebar: Blanco */
+            
+            --card-bg: #FFFFFF; /* Fondo de tarjeta: Blanco puro */
+            --card-shadow: rgba(0,0,0,0.05); /* Sombra de tarjeta muy sutil */
+            --card-header-bg: #5A7F9D; /* Encabezado de tarjeta/tabla/modal: Gris azulado más claro */
+            --card-number-color: #343a40; /* Color de número de tarjeta (se mantiene oscuro para contraste) */
+            
+            /* Colores de citas (pueden ajustarse para que coincidan con esta paleta si es necesario) */
             --cita-card-bg-gradient-start: #e0f2f7;
             --cita-card-bg-gradient-end: #f0f8ff;
             --cita-card-border: #b3e0ff;
@@ -43,6 +46,7 @@
             --cita-icon-empleado: #6f42c1;
             --no-citas-bg: #f0f2f5;
             --no-citas-text: #6c757d;
+
         }
 
         body {
@@ -101,11 +105,11 @@
             color: var(--sidebar-hover-text);
         }
         .sidebar-brand {
-            color: var(--sidebar-hover-text);
+            color: var(--sidebar-hover-text); /* El color del texto de la marca del sidebar (VetWeb) sigue al hover-text para contraste */
             font-size: 1.8rem;
             font-weight: 700;
             padding: 0 20px 1rem;
-            border-bottom: 1px solid var(--sidebar-hover-bg);
+            border-bottom: 1px solid var(--sidebar-hover-bg); /* El borde sigue el hover-bg */
             margin-bottom: 1rem;
             display: flex; /* Para alinear el icono */
             align-items: center; /* Para alinear el icono */
@@ -117,7 +121,6 @@
             font-size: 2.2rem;
         }
 
-        /* Content area positioning for desktop/tablet */
         .content {
             margin-left: 0; /* Content starts after sidebar's padding-left */
             padding: 2rem;
@@ -137,7 +140,7 @@
             transform: translateY(-5px);
         }
         .card-header {
-            background-color: var(--card-header-bg);
+            background-color: var(--card-header-bg); /* Usa el nuevo color de encabezado */
             color: white;
             font-weight: 600;
             border-top-left-radius: 10px;
@@ -252,7 +255,7 @@
         
         /* Specific styles for Clientes.aspx content */
         .btn-custom {
-            background-color: #6f42c1; /* Custom purple */
+            background-color: #5A7F9D; /* Gris azulado más claro de Paleta 3 para "Agregar Nuevo Cliente" */
             color: white;
             border-radius: 8px;
             padding: 10px 20px;
@@ -260,23 +263,24 @@
             transition: background-color 0.3s ease;
         }
         .btn-custom:hover {
-            background-color: #59359a;
+            background-color: #4A6572; /* Gris azulado ligeramente más oscuro al pasar el ratón */
             color: white;
         }
         /* Table enhancements */
         .table-striped tbody tr:nth-of-type(odd) {
-            background-color: #fff; /* Force white background for odd rows */
+            background-color: #fff; /* Force white background for odd rows (if table-striped is still used) */
         }
         .table-hover tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.075);
+            background-color: rgba(0, 0, 0, 0.04); /* Un hover más suave */
         }
         .table-primary th {
-            background-color: #0d6efd; /* Bootstrap primary blue */
+            background-color: #5A7F9D; /* Gris azulado más claro de Paleta 3 para encabezado de tabla */
             color: white;
-            border-color: #0d6efd;
+            border-color: #5A7F9D;
         }
+
         .modal-header {
-            background-color: #0d6efd; /* Primary blue header */
+            background-color: #5A7F9D; /* Gris azulado más claro de Paleta 3 para el encabezado del modal */
             color: white;
             border-top-left-radius: 10px;
             border-top-right-radius: 10px;
@@ -318,8 +322,8 @@
             box-shadow: none; /* Remove default focus shadow */
         }
         .search-input-group .form-control:focus {
-            border-color: #80bdff; /* Bootstrap blue focus */
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Bootstrap focus shadow */
+            border-color: #5A7F9D; /* Gris azulado de Paleta 3 para el foco */
+            box-shadow: 0 0 0 0.25rem rgba(90, 127, 157, 0.25); /* Sombra de foco gris azulado */
         }
 
         .search-input-group .btn {
@@ -332,28 +336,28 @@
 
         /* Specific styles for "Buscar" button */
         .search-input-group #btnBuscarCliente { /* Updated ID */
-            background-color: #0d6efd; /* Primary blue */
+            background-color: #5A7F9D; /* Gris azulado más claro de Paleta 3 para "Buscar" */
             color: white;
-            border-color: #0d6efd;
+            border-color: #5A7F9D;
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
         }
         .search-input-group #btnBuscarCliente:hover { /* Updated ID */
-            background-color: #0b5ed7; /* Darker blue on hover */
-            border-color: #0b5ed7;
+            background-color: #4A6572; /* Gris azulado más oscuro al pasar el ratón */
+            border-color: #4A6572;
         }
 
         /* Specific styles for "Limpiar" button */
         .search-input-group #btnLimpiarBusquedaCliente { /* Updated ID */
-            background-color: #6c757d; /* Secondary gray */
+            background-color: #95A5A6; /* Gris Plata de Paleta 3 para "Limpiar" */
             color: white;
-            border-color: #6c757d;
+            border-color: #95A5A6;
             border-top-right-radius: 8px; /* Rounded corner on the far right */
             border-bottom-right-radius: 8px;
         }
         .search-input-group #btnLimpiarBusquedaCliente:hover { /* Updated ID */
-            background-color: #5c636a; /* Darker gray on hover */
-            border-color: #565e64;
+            background-color: #7F8C8D; /* Gris Plata más oscuro al pasar el ratón */
+            border-color: #7F8C8D;
         }
 
         /* Ensure correct border-radius for input-group buttons */
@@ -375,9 +379,9 @@
         }
 
         #clienteModal .alert-danger { /* Changed to clienteModal */
-            background-color: #f8d7da; /* Light red */
-            color: #721c24; /* Dark red text */
-            border-color: #f5c6cb; /* Red border */
+            background-color: #f8d7da; /* Light red (standard Bootstrap danger) */
+            color: #721c24; /* Dark red text (standard Bootstrap danger) */
+            border-color: #f5c6cb; /* Red border (standard Bootstrap danger) */
             position: relative; /* Needed for pseudo-elements */
         }
 
@@ -388,7 +392,7 @@
             vertical-align: middle;
             display: inline-block;
             line-height: 1; /* Align with text */
-            color: #dc3545; /* Bootstrap red */
+            color: #DC3545; /* Rojo de Bootstrap para el ícono de peligro */
         }
 
         #clienteModal .alert-success::before { /* Changed to clienteModal */
@@ -398,7 +402,7 @@
             vertical-align: middle;
             display: inline-block;
             line-height: 1;
-            color: #28a745; /* Bootstrap green */
+            color: #28a745; /* Verde de Bootstrap para el ícono de éxito */
         }
 
         /* Increase modal width for better display of long messages */
@@ -428,9 +432,9 @@
         </button>
 
         <nav class="sidebar" id="sidebarMenu">
-            <a href="Default.aspx" class="sidebar-brand">
-                VetWeb
-            </a>
+           <a href="Default.aspx" class="sidebar-brand">
+               <i class="bi bi-hospital-fill"></i> VetWeb
+           </a>
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a class="nav-link" href="Default.aspx">
@@ -494,11 +498,7 @@
                         <i class="bi bi-clipboard-check-fill"></i><span>Cita-Servicios</span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="VentaServicios.aspx">
-                        <i class="bi bi-currency-dollar"></i><span>Venta Servicios</span>
-                    </a>
-                </li>
+
             </ul>
         </nav>
 
@@ -536,7 +536,7 @@
                     <asp:BoundField DataField="Correo" HeaderText="Correo" />
                     <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="180px">
                         <ItemTemplate>
-                            <asp:Button ID="btnEditarCliente" runat="server" CommandName="Editar" Text="Editar" CssClass="btn btn-warning btn-sm me-2" CommandArgument="<%# Container.DataItemIndex %>" />
+                            <asp:Button ID="btnEditarCliente" runat="server" CommandName="Editar" Text="Editar" CssClass="btn btn-primary btn-sm me-2" CommandArgument="<%# Container.DataItemIndex %>" /> <%-- Usando btn-primary para el color de la paleta --%>
                             <asp:Button ID="btnEliminarCliente" runat="server" CommandName="Eliminar" Text="Eliminar" CssClass="btn btn-danger btn-sm" CommandArgument="<%# Container.DataItemIndex %>" OnClientClick="return confirm('¿Está seguro de que desea eliminar este cliente?');" />
                         </ItemTemplate>
                     </asp:TemplateField>
@@ -553,7 +553,7 @@
                     </div>
                     <div class="modal-body">
                         <asp:Label ID="lblMensaje" runat="server" EnableViewState="false"></asp:Label><br />
-                       
+                        
                         <div class="mb-3">
                             <label for="txtPrimerNombre" class="form-label">Primer Nombre</label>
                             <asp:TextBox ID="txtPrimerNombre" runat="server" CssClass="form-control" Placeholder="Primer Nombre" />
