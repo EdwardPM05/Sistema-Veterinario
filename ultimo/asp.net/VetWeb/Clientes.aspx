@@ -265,7 +265,7 @@
         }
         /* Table enhancements */
         .table-striped tbody tr:nth-of-type(odd) {
-            background-color: rgba(0, 0, 0, 0.03);
+            background-color: #fff; /* Force white background for odd rows */
         }
         .table-hover tbody tr:hover {
             background-color: rgba(0, 0, 0, 0.075);
@@ -522,7 +522,7 @@
             <hr />
 
             <asp:GridView ID="gvClientes" runat="server" AutoGenerateColumns="False" OnRowCommand="gvClientes_RowCommand"
-                CssClass="table table-striped table-bordered table-hover"
+                CssClass="table table-bordered table-hover"
                 HeaderStyle-CssClass="table-primary"
                 DataKeyNames="ClienteID">
                 <Columns>
