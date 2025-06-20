@@ -80,7 +80,7 @@ CREATE TABLE Mascotas (
     MascotaID INT PRIMARY KEY IDENTITY(1,1),
     Nombre NVARCHAR(50) NOT NULL,
     Edad INT CHECK (Edad >= 0),
-    Sexo CHAR(1) NOT NULL CHECK (Sexo IN ('M', 'F', 'O')),
+    Sexo CHAR(1) NOT NULL CHECK (Sexo IN ('M', 'H')),
     ClienteID INT NOT NULL,
     RazaID INT NOT NULL,
     FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
@@ -109,20 +109,3 @@ CREATE TABLE CitaServicios (
     FOREIGN KEY (CitaID) REFERENCES Citas(CitaID),
     FOREIGN KEY (ServicioID) REFERENCES Servicios(ServicioID)
 );
-
-SELECT name
-FROM sys.check_constraints
-WHERE parent_object_id = OBJECT_ID('dbo.Mascotas') AND col_name(parent_object_id, parent_column_id) = 'Sexo';
-
--- Reemplaza [NombreDeLaRestriccion] con el nombre real que obtuviste.
-ALTER TABLE Mascotas
-DROP CONSTRAINT [NombreDeLaRestriccion];
-
-ALTER TABLE Mascotas
-ADD CONSTRAINT CK_Mascotas_Sexo_MH CHECK (Sexo IN ('M', 'H'));
-
--- Encuentra todas las mascotas con un valor de Sexo diferente a 'M' o 'H'
-SELECT * FROM Mascotas WHERE Sexo NOT IN ('M', 'H');
-
--- Si encuentras alguna, puedes actualizarla manualmente. Por ejemplo, si tienes 'F' y quieres que sea 'H':
--- UPDATE Mascotas SET Sexo = 'H' WHERE Sexo = 'F';

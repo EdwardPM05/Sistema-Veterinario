@@ -1,0 +1,191 @@
+INSERT INTO Clientes (PrimerNombre, ApellidoPaterno, ApellidoMaterno, DNI, Telefono, Direccion, Correo) VALUES
+('Juan', 'Perez', 'Garcia', '12345678', '987654321', 'Av. Las Palmeras 123, Miraflores', 'juan.perez@example.com'),
+('Maria', 'Lopez', 'Diaz', '87654321', '912345678', 'Jr. Los Sauces 456, San Isidro', 'maria.lopez@example.com'),
+('Carlos', 'Ramirez', 'Soto', '23456789', '998765432', 'Calle Real 789, Barranco', 'carlos.ramirez@example.com'),
+('Ana', 'Torres', 'Castro', '98765432', '954321098', 'Psje. Los Pinos 101, Santiago de Surco', 'ana.torres@example.com'),
+('Pedro', 'Vargas', 'Rojas', '34567890', '932109876', 'Av. San Martín 202, Magdalena del Mar', 'pedro.vargas@example.com');
+
+
+
+
+INSERT INTO Especies (NombreEspecie) VALUES
+('Gato'),
+('Perro'),
+('Conejo'),
+('Ave'),
+('Roedor');
+
+
+
+
+-- Para EspecieID 1 (Gato)
+INSERT INTO Razas (NombreRaza, EspecieID) VALUES
+('Siamés', 1),
+('Persa', 1),
+('Maine Coon', 1),
+('Sphynx', 1),
+('Bengala', 1);
+
+-- Para EspecieID 2 (Perro)
+INSERT INTO Razas (NombreRaza, EspecieID) VALUES
+('Labrador Retriever', 2),
+('Pastor Alemán', 2),
+('Bulldog Francés', 2),
+('Poodle', 2),
+('Golden Retriever', 2);
+
+-- Para EspecieID 3 (Conejo)
+INSERT INTO Razas (NombreRaza, EspecieID) VALUES
+('Mini Lop', 3),
+('Netherland Dwarf', 3),
+('Belier', 3),
+('Nueva Zelanda', 3);
+
+-- Para EspecieID 4 (Ave)
+INSERT INTO Razas (NombreRaza, EspecieID) VALUES
+('Periquito', 4),
+('Cacatúa', 4),
+('Agapornis', 4);
+
+-- Para EspecieID 5 (Roedor)
+INSERT INTO Razas (NombreRaza, EspecieID) VALUES
+('Hámster Sirio', 5),
+('Cuy', 5),
+('Jerbo', 5);
+
+
+
+INSERT INTO Mascotas (Nombre, Edad, Sexo, ClienteID, RazaID) VALUES
+-- Mascotas para ClienteID 1 (Juan Perez)
+('Max', 3, 'M', 1, 6),   -- Labrador Retriever (Perro)
+('Luna', 2, 'H', 1, 1),  -- Siamés (Gato)
+
+-- Mascotas para ClienteID 2 (Maria Lopez)
+('Leo', 1, 'M', 2, 2),   -- Persa (Gato)
+('Daisy', 5, 'H', 2, 9), -- Poodle (Perro)
+
+-- Mascotas para ClienteID 3 (Carlos Ramirez)
+('Coco', 4, 'H', 3, 11), -- Mini Lop (Conejo)
+('Rocky', 2, 'M', 3, 7), -- Pastor Alemán (Perro)
+
+-- Mascotas para ClienteID 4 (Ana Torres)
+('Mia', 1, 'H', 4, 3),   -- Maine Coon (Gato)
+('Buddy', 6, 'M', 4, 15),-- Periquito (Ave)
+
+-- Mascotas para ClienteID 5 (Pedro Vargas)
+('Kira', 3, 'H', 5, 10), -- Golden Retriever (Perro)
+('Toby', 1, 'M', 5, 18); -- Hámster Sirio (Roedor)
+
+
+INSERT INTO Roles (NombreRol) VALUES
+('Administrador'),
+('Veterinario'),
+('Recepcionista'),
+('Bañador')
+
+
+INSERT INTO Empleados (PrimerNombre, ApellidoPaterno, ApellidoMaterno, DNI, Correo, Telefono, RolID) VALUES
+-- RolID 1: Administrador
+('Roberto', 'Diaz', 'Ruiz', '11223344', 'roberto.diaz@example.com', '900112233', 1),
+-- RolID 2: Veterinario
+('Laura', 'Gomez', 'Mendoza', '55667788', 'laura.gomez@example.com', '901234567', 2),
+('Miguel', 'Castro', 'Paredes', '99001122', 'miguel.castro@example.com', '902345678', 2),
+-- RolID 3: Recepcionista
+('Sofia', 'Velasquez', 'Nuñez', '33445566', 'sofia.velasquez@example.com', '903456789', 3),
+-- RolID 4: Bañador
+('Andres', 'Huaman', 'Flores', '77889900', 'andres.huaman@example.com', '904567890', 4);
+
+
+
+INSERT INTO CategoriasProductos (NombreCategoria) VALUES
+('Vacunas'),
+('Medicamentos'),
+('Antiinflamatorios'),
+('Antibióticos'),
+('Analgésicos')
+
+
+-- Subcategorías para 'Vacunas' (CategoriaProductoID = 1)
+INSERT INTO Subcategoria (CategoriaProductoID, Nombre, Descripcion) VALUES
+(1, 'Vacunas Virales', 'Vacunas para proteger contra enfermedades virales.'),
+(1, 'Vacunas Bacterianas', 'Vacunas para proteger contra enfermedades bacterianas.'),
+(1, 'Vacunas Polivalentes', 'Vacunas que ofrecen protección contra múltiples enfermedades.');
+
+-- Subcategorías para 'Medicamentos' (CategoriaProductoID = 2)
+INSERT INTO Subcategoria (CategoriaProductoID, Nombre, Descripcion) VALUES
+(2, 'Medicamentos Orales', 'Medicamentos administrados por vía oral.'),
+(2, 'Medicamentos Inyectables', 'Medicamentos administrados por inyección.'),
+(2, 'Medicamentos Tópicos', 'Medicamentos de aplicación externa.');
+
+-- Subcategorías para 'Antiinflamatorios' (CategoriaProductoID = 3)
+INSERT INTO Subcategoria (CategoriaProductoID, Nombre, Descripcion) VALUES
+(3, 'AINEs', 'Antiinflamatorios no esteroideos.'),
+(3, 'Corticosteroides', 'Antiinflamatorios esteroideos.');
+
+-- Subcategorías para 'Antibióticos' (CategoriaProductoID = 4)
+INSERT INTO Subcategoria (CategoriaProductoID, Nombre, Descripcion) VALUES
+(4, 'Antibióticos de Amplio Espectro', 'Activos contra una amplia gama de bacterias.'),
+(4, 'Antibióticos de Espectro Reducido', 'Activos contra tipos específicos de bacterias.');
+
+-- Subcategorías para 'Analgésicos' (CategoriaProductoID = 5)
+INSERT INTO Subcategoria (CategoriaProductoID, Nombre, Descripcion) VALUES
+(5, 'Analgésicos Opioides', 'Para dolor severo.'),
+(5, 'Analgésicos No Opioides', 'Para dolor moderado a leve.');
+
+
+
+INSERT INTO Servicios (NombreServicio, Descripcion, Precio, SubcategoriaID) VALUES
+-- Servicios sin Subcategoria (SubcategoriaID = NULL)
+('Consulta General', 'Evaluación médica completa de la mascota.', 45.00, NULL),
+('Diagnóstico por Imagen (Rayos X)', 'Realización de radiografías para diagnóstico.', 70.00, NULL),
+('Cirugía Menor', 'Procedimientos quirúrgicos ambulatorios.', 150.00, NULL),
+('Peluquería Canina', 'Servicio de corte de pelo y baño para perros.', 60.00, NULL),
+('Hospitalización (Día)', 'Cuidado y observación de la mascota por un día.', 80.00, NULL),
+
+-- Servicios con Subcategoria (ejemplos vinculados a las SubcategoriasProducto existentes)
+-- Asumiendo los IDs de SubcategoriaProducto generados previamente:
+-- 1: Vacunas Virales, 2: Vacunas Bacterianas, 3: Vacunas Polivalentes
+-- 4: Medicamentos Orales, 5: Medicamentos Inyectables
+-- 7: AINEs, 9: Antibióticos de Amplio Espectro, 11: Analgésicos Opioides
+
+('Vacunación Antirrábica', 'Aplicación de la vacuna contra la rabia.', 30.00, 1), -- Relacionado con Vacunas Virales
+('Administración de Medicamento Oral', 'Suministro supervisado de medicación oral.', 15.00, 4), -- Relacionado con Medicamentos Orales
+('Inyección Terapéutica', 'Aplicación de medicamento por vía inyectable.', 20.00, 5), -- Relacionado con Medicamentos Inyectables
+('Tratamiento Antiinflamatorio', 'Administración de antiinflamatorios para el dolor y la inflamación.', 35.00, 7), -- Relacionado con AINEs
+('Terapia Antibiótica', 'Tratamiento con antibióticos para infecciones bacterianas.', 40.00, 9), -- Relacionado con Antibióticos de Amplio Espectro
+('Manejo del Dolor Postoperatorio', 'Administración de analgésicos para controlar el dolor después de una cirugía.', 25.00, 11); -- Relacionado con Analgésicos Opioides
+
+
+
+INSERT INTO Citas (Fecha, MascotaID, EmpleadoID) VALUES
+-- Cita 1: Max (MascotaID 1) con Laura Gomez (EmpleadoID 2, Veterinario) - para hoy
+(GETDATE(), 1, 2),
+-- Cita 2: Luna (MascotaID 2) con Miguel Castro (EmpleadoID 3, Veterinario) - para mañana
+('2025-06-21 10:00:00', 2, 3),
+-- Cita 3: Coco (MascotaID 5) con Roberto Diaz (EmpleadoID 1, Administrador - si es válido para agendar citas)
+('2025-06-22 14:30:00', 5, 1),
+-- Cita 4: Daisy (MascotaID 4) con Laura Gomez (EmpleadoID 2, Veterinario)
+('2025-06-23 09:00:00', 4, 2),
+-- Cita 5: Toby (MascotaID 10) con Miguel Castro (EmpleadoID 3, Veterinario)
+('2025-06-24 16:00:00', 10, 3);
+
+
+
+INSERT INTO CitaServicios (CitaID, ServicioID, Cantidad, PrecioUnitario) VALUES
+-- CitaID 1 (Max con Laura Gomez)
+(1, 1, 1, 45.00), -- Servicio: Consulta General (Precio: 45.00)
+
+-- CitaID 2 (Luna con Miguel Castro) - Múltiples servicios
+(2, 1, 1, 45.00),  -- Servicio: Consulta General (Precio: 45.00)
+(2, 6, 1, 30.00),  -- Servicio: Vacunación Antirrábica (Precio: 30.00)
+
+-- CitaID 3 (Coco con Roberto Diaz)
+(3, 2, 1, 70.00), -- Servicio: Diagnóstico por Imagen (Rayos X) (Precio: 70.00)
+
+-- CitaID 4 (Daisy con Laura Gomez) - Múltiples servicios
+(4, 1, 1, 45.00),  -- Servicio: Consulta General (Precio: 45.00)
+(4, 9, 1, 35.00),  -- Servicio: Tratamiento Antiinflamatorio (Precio: 35.00)
+(4, 7, 2, 15.00),  -- Servicio: Administración de Medicamento Oral (Cantidad 2, Precio: 15.00 cada uno)
+
+-- CitaID 5 (Toby con Miguel Castro)
+(5, 5, 1, 80.00); -- Servicio: Hospitalización (Día) (Precio: 80.00)
