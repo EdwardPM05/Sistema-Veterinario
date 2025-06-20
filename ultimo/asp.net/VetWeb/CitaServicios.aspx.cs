@@ -2,8 +2,9 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text.RegularExpressions; // Necesario para expresiones regulares (si se usa en validaciones de texto)
-using System.Web.UI; // Necesario para ScriptManager
+using System.Globalization; // Necesario para CultureInfo
+using System.Text.RegularExpressions;
+using System.Web.UI;
 using System.Web.UI.WebControls;
 
 namespace VetWeb
@@ -179,15 +180,18 @@ namespace VetWeb
                 cantidad = 0; // Si no es un número válido, tratar como 0
             }
 
+            // Crear un objeto CultureInfo para Soles Peruanos
+            CultureInfo culturePE = new CultureInfo("es-PE");
+
             // Mostrar el precio unitario actual (del servicio master)
-            lblPrecioUnitarioActual.Text = precioUnitarioActual.ToString("C"); // Formato moneda
+            lblPrecioUnitarioActual.Text = precioUnitarioActual.ToString("C", culturePE); // Formato moneda con cultura es-PE
 
             // Calcular y mostrar el subtotal (Cantidad * Precio Unitario Actual)
             decimal subtotal = precioUnitarioActual * cantidad;
-            lblSubtotalServicio.Text = subtotal.ToString("C"); // Formato moneda
+            lblSubtotalServicio.Text = subtotal.ToString("C", culturePE); // Formato moneda con cultura es-PE
 
             // Almacenar el precio unitario actual en el HiddenField para ser guardado en CitaServicios.PrecioUnitario
-            hfPrecioUnitarioGuardado.Value = precioUnitarioActual.ToString();
+            hfPrecioUnitarioGuardado.Value = precioUnitarioActual.ToString(CultureInfo.InvariantCulture); // Guardar sin símbolo de moneda para el HiddenField
         }
 
 
@@ -244,7 +248,9 @@ namespace VetWeb
                 }
                 con.Close();
             }
-            lblTotalCita.Text = $"Total de la Cita: {totalCita.ToString("C")}"; // Formato moneda
+            // Crear un objeto CultureInfo para Soles Peruanos
+            CultureInfo culturePE = new CultureInfo("es-PE");
+            lblTotalCita.Text = $"Total de la Cita: {totalCita.ToString("C", culturePE)}"; // Formato moneda con cultura es-PE
         }
 
 
@@ -266,7 +272,7 @@ namespace VetWeb
             int citaID = Convert.ToInt32(hfSelectedCitaID.Value);
             int servicioID = Convert.ToInt32(ddlServicios.SelectedValue);
             int cantidad = Convert.ToInt32(txtCantidad.Text.Trim());
-            decimal precioUnitario = Convert.ToDecimal(hfPrecioUnitarioGuardado.Value); // Usar el precio capturado en el modal
+            decimal precioUnitario = Convert.ToDecimal(hfPrecioUnitarioGuardado.Value, CultureInfo.InvariantCulture); // Usar el precio capturado en el modal
 
             bool successOperation = false;
             using (SqlConnection con = new SqlConnection(cadena))
@@ -347,7 +353,7 @@ namespace VetWeb
             int cantidad = Convert.ToInt32(txtCantidad.Text.Trim());
             // Para la actualización, el PrecioUnitario DEBE ser el que ya está guardado para ese CitaServicioID,
             // no el precio actual del servicio master, para mantener la integridad histórica.
-            decimal precioUnitarioExistente = Convert.ToDecimal(hfPrecioUnitarioGuardado.Value);
+            decimal precioUnitarioExistente = Convert.ToDecimal(hfPrecioUnitarioGuardado.Value, CultureInfo.InvariantCulture);
 
             bool successOperation = false;
             using (SqlConnection con = new SqlConnection(cadena))
@@ -442,7 +448,11 @@ namespace VetWeb
                 {
                     ddlServicios.SelectedValue = servicioID.ToString();
                     txtCantidad.Text = row.Cells[1].Text.Trim(); // Cantidad
-                    hfPrecioUnitarioGuardado.Value = Convert.ToDecimal(row.Cells[2].Text.Replace("S/", "").Replace("$", "").Trim()).ToString(); // Precio Unitario guardado
+                    // Al leer el precio unitario del GridView, asegúrate de que el formato de moneda sea removido
+                    // antes de convertir a decimal para evitar errores de formato, usando InvariantCulture.
+                    decimal parsedPrecioUnitario = decimal.Parse(row.Cells[2].Text.Replace("S/", "").Replace("$", "").Trim(), NumberStyles.Currency, CultureInfo.InvariantCulture);
+                    hfPrecioUnitarioGuardado.Value = parsedPrecioUnitario.ToString(CultureInfo.InvariantCulture); // Guardar el valor numérico en el HiddenField
+
                     CalcularValoresModal(); // Recalcular el subtotal en el modal basándose en los datos cargados
 
                     hfCitaServicioID.Value = citaServicioID.ToString();
@@ -505,8 +515,12 @@ namespace VetWeb
             ddlServicios.ClearSelection();
             if (ddlServicios.Items.Count > 0) ddlServicios.Items.FindByValue("").Selected = true;
             txtCantidad.Text = "";
-            lblPrecioUnitarioActual.Text = "S/ 0.00";
-            lblSubtotalServicio.Text = "S/ 0.00";
+
+            // Crear un objeto CultureInfo para Soles Peruanos
+            CultureInfo culturePE = new CultureInfo("es-PE");
+            lblPrecioUnitarioActual.Text = (0M).ToString("C", culturePE); // Inicializar en formato de Soles
+            lblSubtotalServicio.Text = (0M).ToString("C", culturePE);     // Inicializar en formato de Soles
+
             hfCitaServicioID.Value = "";
             hfPrecioUnitarioGuardado.Value = ""; // Limpiar también el hidden field del precio guardado
 

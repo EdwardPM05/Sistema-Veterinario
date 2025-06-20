@@ -504,16 +504,17 @@
                 <Columns>
                     <%-- Las columnas se muestran en el orden que se definen aquí --%>
                     <asp:BoundField DataField="NombreServicio" HeaderText="Servicio" />
-                    <asp:BoundField DataField="Precio" HeaderText="Precio" DataFormatString="{0:C}" />
+                    <asp:BoundField DataField="Precio" HeaderText="Precio" DataFormatString="{0:C2}" HtmlEncode="false" SortExpression="Precio" />
                     <asp:BoundField DataField="NombreSubcategoria" HeaderText="Subcategoría" />
                     <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="180px">
                         <ItemTemplate runat="server"> <%-- Added runat="server" explicitly --%>
                             <asp:Button ID="btnEditarServicio" runat="server" CommandName="Editar" Text="Editar" CssClass="btn btn-primary btn-sm me-2" CommandArgument="<%# Container.DataItemIndex %>" /> <%-- Changed from btn-warning to btn-primary --%>
-                            <asp:Button ID="btnEliminarServicio" runat="server" CommandName="Eliminar" Text="Eliminar" CssClass="btn btn-danger btn-sm" CommandArgument="<%# Container.DataItemIndex %>" OnClientClick="return confirm('¿Está seguro de que desea eliminar este servicio? Esto también eliminará ventas y citas asociadas si no hay restricciones de base de datos que lo impidan.');" />
+                            <asp:Button ID="btnEliminarServicio" runat="server" CommandName="Eliminar" Text="Eliminar" CssClass="btn btn-danger btn-sm" CommandArgument="<%# Container.DataItemIndex %>" OnClientClick="return confirm('¿Está seguro de que desea eliminar este servicio? Esto también eliminará citas asociadas si no hay restricciones de base de datos que lo impidan.');" />
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>
             </asp:GridView>
+
         </div>
 
         <!-- Modal de Bootstrap para Añadir/Editar Servicio -->
@@ -534,8 +535,8 @@
                             <asp:TextBox ID="txtNombreServicio" runat="server" CssClass="form-control" Placeholder="Nombre del Servicio" />
                         </div>
                         <div class="mb-3">
-                            <label for="txtPrecio" class="form-label">Precio del Servicio</label>
-                            <asp:TextBox ID="txtPrecio" runat="server" CssClass="form-control" Placeholder="Precio del Servicio" TextMode="Number" />
+                            <label for="txtPrecio" class="form-label">Nombre del Servicio</label>
+                            <asp:TextBox ID="txtPrecio" runat="server" CssClass="form-control" Placeholder="Precio del Servicio" /> <%-- Se eliminó TextMode="Number" --%>
                         </div>
                         
                         <div class="mb-3">
