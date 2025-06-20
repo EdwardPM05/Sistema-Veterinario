@@ -40,7 +40,3 @@ VetWeb se concibe como una aplicación de gestión veterinaria completa y vangua
 - **IDE:** Visual Studio 
 
 
-
-## 🙍‍♂️ Colaboradores
-
-- **Edward Pitman**
