@@ -34,11 +34,23 @@ namespace VetWeb
                 SqlDataAdapter da = new SqlDataAdapter("SELECT RolID, NombreRol FROM Roles ORDER BY NombreRol", con);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
+
+                // Limpiar para asegurar que no haya duplicados si se llama inesperadamente
+                ddlRoles.ClearSelection(); // Borra cualquier selección previa
+                ddlRoles.Items.Clear();    // Borra todos los items existentes
+
                 ddlRoles.DataSource = dt;
                 ddlRoles.DataTextField = "NombreRol";
                 ddlRoles.DataValueField = "RolID";
                 ddlRoles.DataBind();
-                ddlRoles.Items.Insert(0, new ListItem("Seleccione un rol", "")); // Opción por defecto
+
+                // Solo inserta la opción "Seleccione un rol" si no está ya presente
+                if (ddlRoles.Items.FindByValue("") == null) // Buscar por el valor vacío
+                {
+                    ddlRoles.Items.Insert(0, new ListItem("Seleccione un rol", "")); // Opción por defecto
+                }
+                // Asegurarse de que la opción por defecto esté seleccionada al inicio
+                ddlRoles.Items.FindByValue("").Selected = true;
             }
         }
 
@@ -60,6 +72,7 @@ namespace VetWeb
                         E.DNI, 
                         E.Correo, 
                         E.Telefono, 
+                        R.RolID, 
                         R.NombreRol 
                     FROM Empleados E
                     INNER JOIN Roles R ON E.RolID = R.RolID";
@@ -273,27 +286,55 @@ namespace VetWeb
 
             if (e.CommandName == "Editar")
             {
-                // Los índices de celdas corresponden al orden de las BoundFields en el ASPX después de ocultar EmpleadoID
+                // Los índices de celdas deben coincidir con el orden de las BoundFields en el ASPX
+                // Si añadiste RolID como columna oculta, ajusta los índices.
+                // Ejemplo: Si RolID es la 7ma columna (índice 6) y NombreRol la 8va (índice 7)
                 txtPrimerNombre.Text = row.Cells[0].Text;
                 txtApellidoPaterno.Text = row.Cells[1].Text;
-                txtApellidoMaterno.Text = row.Cells[2].Text == "&nbsp;" ? "" : row.Cells[2].Text; // Manejar campos vacíos del GridView
+                txtApellidoMaterno.Text = row.Cells[2].Text == "&nbsp;" ? "" : row.Cells[2].Text;
                 txtDNI.Text = row.Cells[3].Text;
-                txtCorreo.Text = row.Cells[4].Text == "&nbsp;" ? "" : row.Cells[4].Text; // Manejar campos vacíos del GridView
-                txtTelefono.Text = row.Cells[5].Text == "&nbsp;" ? "" : row.Cells[5].Text; // Manejar campos vacíos del GridView
+                txtCorreo.Text = row.Cells[4].Text == "&nbsp;" ? "" : row.Cells[4].Text;
+                txtTelefono.Text = row.Cells[5].Text == "&nbsp;" ? "" : row.Cells[5].Text;
 
-                // Seleccionar el rol correcto en el DropDownList
-                string nombreRol = row.Cells[6].Text; // Rol está en la celda 6 (0-indexed) después de los otros campos
-                ListItem rolItem = ddlRoles.Items.FindByText(nombreRol);
-                if (rolItem != null)
+                // ***** CAMBIO CLAVE AQUÍ *****
+                // Obtener el RolID de la celda oculta del GridView
+                // AHORA el RolID debe estar en una celda si lo añadiste como BoundField
+                // Asegúrate de que el índice sea el correcto según tu GridView.
+                // Si RolID es la 7ma columna (index 6) y NombreRol la 8va (index 7)
+                string rolIDString = row.Cells[7].Text; // <-- Ajusta este índice si es diferente en tu ASPX
+
+                int rolID;
+                if (int.TryParse(rolIDString, out rolID))
                 {
-                    ddlRoles.SelectedValue = rolItem.Value;
+                    // Importante: No llamar CargarRoles() aquí de nuevo, ya se cargó en Page_Load
+                    // Solo intentar seleccionar el valor.
+                    ListItem rolItem = ddlRoles.Items.FindByValue(rolID.ToString());
+                    if (rolItem != null)
+                    {
+                        ddlRoles.SelectedValue = rolItem.Value;
+                    }
+                    else
+                    {
+                        // Si el RolID del empleado no se encuentra en la lista de ddlRoles.
+                        // Esto indicaría un problema de datos (un RolID en Empleados que no existe en Roles)
+                        ddlRoles.ClearSelection();
+                        // Selecciona la opción por defecto "Seleccione un rol" (valor vacío)
+                        if (ddlRoles.Items.FindByValue("") != null)
+                        {
+                            ddlRoles.Items.FindByValue("").Selected = true;
+                        }
+                        MostrarMensaje("Advertencia: El rol asociado a este empleado no se encontró en la lista de roles disponibles. Por favor, seleccione uno nuevo.", false);
+                    }
                 }
                 else
                 {
+                    // Esto sucede si row.Cells[X].Text no es un número válido.
                     ddlRoles.ClearSelection();
-                    ddlRoles.Items.Insert(0, new ListItem("Rol no encontrado", "")); // O manejar como prefieras
-                    ddlRoles.Items.FindByValue("").Selected = true;
-                    MostrarMensaje("Advertencia: El rol asociado a este empleado no se encontró. Por favor, seleccione uno nuevo.", false);
+                    if (ddlRoles.Items.FindByValue("") != null)
+                    {
+                        ddlRoles.Items.FindByValue("").Selected = true;
+                    }
+                    MostrarMensaje("Advertencia: El ID del rol del empleado no es válido. Por favor, seleccione uno nuevo.", false);
                 }
 
                 hfEmpleadoID.Value = empleadoID.ToString();
@@ -302,7 +343,7 @@ namespace VetWeb
                 btnActualizar.Style["display"] = "inline-block";
 
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "SetEmpleadoModalTitle", "document.getElementById('empleadoModalLabel').innerText = 'Editar Empleado';", true);
-                MostrarMensaje("", false); // Limpia mensajes
+                MostrarMensaje("", false); // Limpia mensajes antes de mostrar el modal
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "ShowEmpleadoModalScript", "showEmpleadoModal();", true); // Mostrar modal
             }
             else if (e.CommandName == "Eliminar")
@@ -372,8 +413,17 @@ namespace VetWeb
             txtCorreo.Text = "";
             txtTelefono.Text = "";
             ddlRoles.ClearSelection();
-            ddlRoles.Items.Insert(0, new ListItem("Seleccione un rol", "")); // Seleccionar la opción por defecto
-            ddlRoles.Items.FindByValue("").Selected = true; // Asegurarse de que el valor vacío sea el seleccionado
+            if (ddlRoles.Items.FindByValue("") != null)
+            {
+                ddlRoles.Items.FindByValue("").Selected = true;
+            }
+            else
+            {
+                // En un caso extremo, si no existe, re-insertarlo y seleccionarlo.
+                ddlRoles.Items.Insert(0, new ListItem("Seleccione un rol", ""));
+                ddlRoles.Items.FindByValue("").Selected = true;
+            }
+
             hfEmpleadoID.Value = "";
             btnAgregar.Style["display"] = "inline-block";
             btnActualizar.Style["display"] = "none";

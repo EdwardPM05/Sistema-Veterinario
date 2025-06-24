@@ -39,7 +39,7 @@ namespace VetWeb
         /// Campo generado automáticamente.
         /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnBuscarServicio;
+        protected global::System.Web.UI.WebControls.LinkButton btnBuscarServicio;
 
         /// <summary>
         /// Control btnLimpiarBusquedaServicio.
@@ -48,7 +48,7 @@ namespace VetWeb
         /// Campo generado automáticamente.
         /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnLimpiarBusquedaServicio;
+        protected global::System.Web.UI.WebControls.LinkButton btnLimpiarBusquedaServicio;
 
         /// <summary>
         /// Control gvServicios.

@@ -301,17 +301,7 @@ namespace VetWeb
                     try
                     {
                         // **VALIDACIÓN DE DEPENDENCIAS ANTES DE ELIMINAR**
-                        // Verificar si hay ventas de servicios asociadas a este servicio
-                        SqlCommand checkVentaCmd = new SqlCommand("SELECT COUNT(*) FROM VentaServicios WHERE ServicioID = @ServicioID", con, transaction);
-                        checkVentaCmd.Parameters.AddWithValue("@ServicioID", servicioID);
-                        int dependentSales = (int)checkVentaCmd.ExecuteScalar();
-
-                        if (dependentSales > 0)
-                        {
-                            MostrarMensaje("No se puede eliminar este servicio porque tiene " + dependentSales + " venta(s) asociada(s). Elimine o reasigne las ventas primero.", false);
-                            transaction.Rollback(); // Revertir si hay dependencias
-                            return;
-                        }
+                        // Solo se mantiene la verificación para CitaServicios, ya que VentaServicios fue eliminada.
 
                         // Verificar si hay CitaServicios asociadas a este servicio
                         SqlCommand checkCitaCmd = new SqlCommand("SELECT COUNT(*) FROM CitaServicios WHERE ServicioID = @ServicioID", con, transaction);

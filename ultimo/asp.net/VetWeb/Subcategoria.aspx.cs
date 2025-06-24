@@ -270,20 +270,8 @@ namespace VetWeb
 
                     try
                     {
-                        // **VALIDACIÓN DE DEPENDENCIAS ANTES DE ELIMINAR**
-                        // Verificar si hay productos asociados a esta subcategoría
-                        SqlCommand checkCmd = new SqlCommand("SELECT COUNT(*) FROM Productos WHERE SubcategoriaID = @SubcategoriaID", con, transaction);
-                        checkCmd.Parameters.AddWithValue("@SubcategoriaID", subcategoriaID);
-                        int dependentProductos = (int)checkCmd.ExecuteScalar();
-
-                        if (dependentProductos > 0)
-                        {
-                            MostrarMensaje("No se puede eliminar esta subcategoría porque tiene " + dependentProductos + " producto(s) asociado(s). Elimine o reasigne los productos primero.", false);
-                            transaction.Rollback(); // Revertir si hay dependencias
-                            return; // Detener el proceso de eliminación
-                        }
-
-                        // Si no hay productos asociados, proceder con la eliminación de la subcategoría
+                        // Se eliminó la validación para la tabla 'Productos'
+                        // Si no hay dependencias, proceder con la eliminación de la subcategoría
                         SqlCommand cmd = new SqlCommand("DELETE FROM Subcategoria WHERE SubcategoriaID = @SubcategoriaID", con, transaction);
                         cmd.Parameters.AddWithValue("@SubcategoriaID", subcategoriaID);
                         cmd.ExecuteNonQuery();
@@ -296,7 +284,9 @@ namespace VetWeb
                         transaction.Rollback(); // Revertir en caso de error
                         if (ex.Number == 547) // Error de clave foránea
                         {
-                            MostrarMensaje("No se pudo eliminar la subcategoría porque tiene registros asociados (ej. productos). Elimine los registros asociados primero.", false);
+                            // Este mensaje es genérico si hay otras tablas que referencian Subcategoria,
+                            // como 'Servicios' si SubcategoriaID es una FK en Servicios.
+                            MostrarMensaje("No se pudo eliminar la subcategoría porque tiene registros asociados. Elimine los registros asociados primero.", false);
                         }
                         else
                         {

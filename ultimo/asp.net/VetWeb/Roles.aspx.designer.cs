@@ -39,7 +39,7 @@ namespace VetWeb
         /// Campo generado automáticamente.
         /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnBuscarRol;
+        protected global::System.Web.UI.WebControls.LinkButton btnBuscarRol;
 
         /// <summary>
         /// Control btnLimpiarBusquedaRol.
@@ -48,7 +48,7 @@ namespace VetWeb
         /// Campo generado automáticamente.
         /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnLimpiarBusquedaRol;
+        protected global::System.Web.UI.WebControls.LinkButton btnLimpiarBusquedaRol;
 
         /// <summary>
         /// Control gvRoles.

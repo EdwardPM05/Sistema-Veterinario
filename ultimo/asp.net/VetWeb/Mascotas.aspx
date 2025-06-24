@@ -201,6 +201,76 @@
             background-color: var(--btn-custom-hover-bg);
             color: white;
         }
+        /* Add this new rule for your table */
+        .table {
+            border-radius: 10px; /* Apply border-radius to the table */
+            overflow: hidden; /* Crucial to clip internal elements to the rounded corners */
+            border-collapse: separate; /* Required for border-radius to work with table borders */
+            border-spacing: 0; /* Ensures no gap between cells if border-collapse is separate */
+        }
+
+        /* If your table is typically wrapped inside a .card-body or similar,
+           you might want to ensure the table itself also has the rounded corners.
+           The .card-header already has rounded top corners.
+           For the bottom corners, you'd want the table's bottom corners to align.
+        */
+        .table-primary th:first-child {
+            border-top-left-radius: 10px; /* Match card-header */
+        }
+        .table-primary th:last-child {
+            border-top-right-radius: 10px; /* Match card-header */
+        }
+
+        /* For the bottom corners of the table */
+        .table tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 10px;
+        }
+        .table tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 10px;
+        }
+
+
+
+          /* Agrega o modifica estas reglas en tu sección <style> */
+
+          /* Regla para quitar la línea debajo de los iconos (si acaso persistía) */
+          .table .icon-action {
+              text-decoration: none !important; /* Asegura que no haya subrayado */
+              display: inline-block; /* Importante para que el margen y el padding funcionen bien */
+              padding: 0; /* Elimina cualquier padding predeterminado */
+              margin: 0; /* Elimina cualquier margen predeterminado */
+              border: none !important; /* Asegura que no haya bordes inesperados */
+              background-color: transparent !important; /* Fondo transparente */
+              line-height: 1; /* Ayuda a controlar el espacio vertical */
+              vertical-align: middle; /* Alinea los iconos verticalmente */
+          }
+
+          /* Espacio entre los iconos, aplicado al primer icono */
+          .table .icon-action:first-of-type {
+              margin-right: 15px; /* Ajusta este valor (ej. 10px, 20px) para el espacio deseado entre el lápiz y el tacho */
+          }
+
+          /* Efecto hover opcional para cuando pases el mouse por encima del icono */
+          .table .icon-action:hover {
+              opacity: 0.7; /* Hace el icono ligeramente transparente */
+              transform: scale(1.1); /* Hace el icono ligeramente más grande */
+              transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+          }
+
+
+
+          /* Asegurar que el sr-only no afecte el layout visual */
+          .sr-only {
+              position: absolute;
+              width: 1px;
+              height: 1px;
+              padding: 0;
+              margin: -1px;
+              overflow: hidden;
+              clip: rect(0, 0, 0, 0);
+              white-space: nowrap;
+              border: 0;
+          }
         .table-striped tbody tr:nth-of-type(odd) {
             background-color: var(--card-bg); /* Use card-bg for odd rows */
         }
@@ -476,13 +546,24 @@
 
         <!-- Main Content Area -->
         <div class="content">
-            <h2 class="mb-4">Gestión de Mascotas</h2>
+
 
             <!-- Barra de Búsqueda -->
             <div class="input-group mb-3 search-input-group">
                 <asp:TextBox ID="txtBuscarNombreMascota" runat="server" CssClass="form-control" Placeholder="Buscar por nombre, cliente o raza" />
-                <asp:Button ID="btnBuscarMascota" runat="server" CssClass="btn btn-outline-secondary" Text="Buscar" OnClick="btnBuscarMascota_Click" />
-                <asp:Button ID="btnLimpiarBusquedaMascota" runat="server" CssClass="btn btn-outline-secondary" Text="Limpiar" OnClick="btnLimpiarBusquedaMascota_Click" />
+                <asp:LinkButton ID="btnBuscarMascota" runat="server" OnClick="btnBuscarMascota_Click"
+                    CssClass="btn btn-outline-secondary" 
+                    ToolTip="Buscar">
+                    <i class="bi bi-search fs-6"></i> 
+                    <span class="sr-only">Buscar</span> 
+                </asp:LinkButton>
+
+                <asp:LinkButton ID="btnLimpiarBusquedaMascota" runat="server" OnClick="btnLimpiarBusquedaMascota_Click"
+                    CssClass="btn btn-outline-secondary"
+                    ToolTip="Limpiar">
+                    <i class="bi bi-x-lg fs-6"></i> 
+                    <span class="sr-only">Limpiar</span> 
+                </asp:LinkButton>
             </div>
 
             <!-- Botón para abrir el Modal de Añadir/Editar -->
@@ -508,10 +589,24 @@
                     <asp:BoundField DataField="Sexo" HeaderText="Sexo" />
                     <asp:BoundField DataField="NombreCliente" HeaderText="Cliente" />
                     <asp:BoundField DataField="NombreRaza" HeaderText="Raza" />
-                    <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="180px">
+                    <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="80px">
                         <ItemTemplate>
-                            <asp:Button ID="btnEditarMascota" runat="server" CommandName="Editar" Text="Editar" CssClass="btn btn-primary btn-sm me-2" CommandArgument="<%# Container.DataItemIndex %>" /> <%-- Changed to btn-primary --%>
-                            <asp:Button ID="btnEliminarMascota" runat="server" CommandName="Eliminar" Text="Eliminar" CssClass="btn btn-danger btn-sm" CommandArgument="<%# Container.DataItemIndex %>" OnClientClick="return confirm('¿Está seguro de que desea eliminar esta mascota? Esto también eliminará citas asociadas si no hay restricciones de base de datos que lo impidan.');" />
+                            <asp:LinkButton ID="btnEditarMascota" runat="server" CommandName="Editar"
+                                CssClass="icon-action icon-edit-custom ms-2 me-2"
+                                CommandArgument="<%# Container.DataItemIndex %>"
+                                ToolTip="Editar Mascota">
+                                <i class="bi bi-pencil fs-5"></i>
+                                <span class="sr-only">Editar</span>
+                            </asp:LinkButton>
+                
+                            <asp:LinkButton ID="btnEliminarMascota" runat="server" CommandName="Eliminar"
+                                CssClass="icon-action text-danger me-2"
+                                CommandArgument="<%# Container.DataItemIndex %>"
+                                OnClientClick="return confirm('¿Está seguro de que desea eliminar esta mascota?');"
+                                ToolTip="Eliminar Mascota">
+                                <i class="bi bi-trash fs-5"></i>
+                                <span class="sr-only">Eliminar</span>
+                            </asp:LinkButton>
                         </ItemTemplate>
                     </asp:TemplateField>
                 </Columns>

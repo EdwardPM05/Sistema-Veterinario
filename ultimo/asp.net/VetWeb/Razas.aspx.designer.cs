@@ -39,7 +39,7 @@ namespace VetWeb
         /// Campo generado automáticamente.
         /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnBuscarRaza;
+        protected global::System.Web.UI.WebControls.LinkButton btnBuscarRaza;
 
         /// <summary>
         /// Control btnLimpiarBusquedaRaza.
@@ -48,7 +48,7 @@ namespace VetWeb
         /// Campo generado automáticamente.
         /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnLimpiarBusquedaRaza;
+        protected global::System.Web.UI.WebControls.LinkButton btnLimpiarBusquedaRaza;
 
         /// <summary>
         /// Control gvRazas.

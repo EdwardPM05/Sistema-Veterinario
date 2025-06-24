@@ -189,22 +189,55 @@ namespace VetWeb
         /// </summary>
         protected void gvRoles_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            int index = Convert.ToInt32(e.CommandArgument);
+            // Asegurarse de que el CommandArgument es un índice válido
+            int index;
+            if (!int.TryParse(e.CommandArgument.ToString(), out index))
+            {
+                MostrarMensaje("Error: El comando no proporcionó un índice de fila válido.", false);
+                return;
+            }
 
-            // Obtener RolID usando DataKeys para robustez
+            // Validar el índice y obtener el RolID de DataKeys
             if (gvRoles.DataKeys == null || index < 0 || index >= gvRoles.DataKeys.Count)
             {
-                MostrarMensaje("Error interno: No se pudo obtener el ID del rol. Por favor, recargue la página.", false);
+                MostrarMensaje("Error interno: No se pudo obtener el ID del rol de la fila seleccionada. Recargue la página.", false);
                 return;
             }
             int rolID = Convert.ToInt32(gvRoles.DataKeys[index].Value);
 
-            GridViewRow row = gvRoles.Rows[index];
 
             if (e.CommandName == "Editar")
             {
-                // NombreRol es la primera columna visible
-                txtNombreRol.Text = row.Cells[0].Text;
+                string nombreRol = "";
+                using (SqlConnection con = new SqlConnection(cadena))
+                {
+                    // ***** CAMBIO CLAVE: Cargar el NombreRol desde la DB usando el RolID *****
+                    string query = "SELECT NombreRol FROM Roles WHERE RolID = @RolID";
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    cmd.Parameters.AddWithValue("@RolID", rolID);
+                    try
+                    {
+                        con.Open();
+                        object result = cmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            nombreRol = result.ToString();
+                        }
+                        else
+                        {
+                            // Esto podría pasar si el RolID ya no existe en la DB
+                            MostrarMensaje("El rol no se encontró en la base de datos.", false);
+                            return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MostrarMensaje("Error al cargar datos del rol para edición: " + ex.Message, false);
+                        return;
+                    }
+                }
+
+                txtNombreRol.Text = nombreRol; // <-- Ahora 'nombreRol' viene de la DB por el ID
                 hfRolID.Value = rolID.ToString();
 
                 btnAgregar.Style["display"] = "none";
@@ -216,15 +249,17 @@ namespace VetWeb
             }
             else if (e.CommandName == "Eliminar")
             {
+                // El código de eliminación que tienes ya usa el rolID de DataKeys, lo cual es correcto.
+                // No necesita cambios aquí, solo asegúrate de que el 'rolID' que llega sea el correcto.
+                // El resto de tu lógica de eliminación es correcta y robusta con la transacción y validación de dependencias.
+
                 using (SqlConnection con = new SqlConnection(cadena))
                 {
                     con.Open();
-                    SqlTransaction transaction = con.BeginTransaction(); // Iniciar transacción
+                    SqlTransaction transaction = con.BeginTransaction();
 
                     try
                     {
-                        // **VALIDACIÓN DE DEPENDENCIAS ANTES DE ELIMINAR**
-                        // Un rol no debe eliminarse si hay empleados asociados a él.
                         SqlCommand checkCmd = new SqlCommand("SELECT COUNT(*) FROM Empleados WHERE RolID = @RolID", con, transaction);
                         checkCmd.Parameters.AddWithValue("@RolID", rolID);
                         int dependentEmpleados = (int)checkCmd.ExecuteScalar();
@@ -232,22 +267,21 @@ namespace VetWeb
                         if (dependentEmpleados > 0)
                         {
                             MostrarMensaje("No se puede eliminar este rol porque hay " + dependentEmpleados + " empleado(s) asociado(s) a él. Elimine o reasigne los empleados primero.", false);
-                            transaction.Rollback(); // Revertir si hay dependencias
-                            return; // Detener el proceso de eliminación
+                            transaction.Rollback();
+                            return;
                         }
 
-                        // Si no hay empleados asociados, proceder con la eliminación
                         SqlCommand cmd = new SqlCommand("DELETE FROM Roles WHERE RolID = @RolID", con, transaction);
                         cmd.Parameters.AddWithValue("@RolID", rolID);
                         cmd.ExecuteNonQuery();
 
-                        transaction.Commit(); // Confirmar la transacción
+                        transaction.Commit();
                         MostrarMensaje("Rol eliminado correctamente.", true);
                     }
                     catch (SqlException ex)
                     {
-                        transaction.Rollback(); // Revertir en caso de error
-                        if (ex.Number == 547) // Error de clave foránea genérico
+                        transaction.Rollback();
+                        if (ex.Number == 547)
                         {
                             MostrarMensaje("No se pudo eliminar el rol porque tiene registros asociados (ej. empleados). Elimine los registros asociados primero.", false);
                         }
@@ -265,7 +299,7 @@ namespace VetWeb
                         con.Close();
                     }
                 }
-                CargarRoles(); // Refrescar el GridView después de eliminar
+                CargarRoles();
             }
         }
 
