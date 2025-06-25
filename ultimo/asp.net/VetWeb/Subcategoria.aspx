@@ -10,314 +10,315 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <style>
-        /* Inclusión de la fuente Flexo Soft Demi */
-        @font-face {
-            font-family: 'Flexo Soft Demi';
-            src: url('<%= ResolveUrl("~/Assets/Fonts/FlexoSoftDemi.woff") %>') format('woff');
-            font-weight: 600; /* Asumiendo que 'Demi' es semibold */
-            font-style: normal;
-            font-display: swap; /* Mejorar el rendimiento de carga de fuentes */
-        }
+    /* Inclusión de la fuente Flexo Soft Demi */
+    @font-face {
+        font-family: 'Flexo Soft Demi';
+        src: url('<%= ResolveUrl("~/Assets/Fonts/FlexoSoftDemi.woff") %>') format('woff');
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
+    }
 
-        /* Global box-sizing for consistent layout */
-        html, body {
-            box-sizing: border-box;
-        }
-        *, *::before, *::after {
-            box-sizing: inherit;
-        }
+    /* Global box-sizing for consistent layout */
+    html, body {
+        box-sizing: border-box;
+    }
+    *, *::before, *::after {
+        box-sizing: inherit;
+    }
 
-        /* Definición de variables CSS para colores */
-        :root {
-            --body-bg: #F0F2F5; /* Fondo principal gris claro muy suave */
-            --text-color: #333333; /* Texto general gris oscuro */
+    /* Definición de variables CSS para colores */
+    :root {
+        --body-bg: #F0F2F5; /* Fondo principal gris claro muy suave */
+        --text-color: #333333; /* Texto general gris oscuro */
 
-            --sidebar-bg: #2C3E50; /* Fondo de la barra lateral: Gris azulado oscuro */
-            --sidebar-text: #EAECEE; /* Color de texto del sidebar: Gris muy claro */
-            --sidebar-hover-bg: #34495E; /* Fondo al pasar el mouse por el sidebar: Gris azulado medio */
-            --sidebar-hover-text: #FFFFFF; /* Texto al pasar el mouse por el sidebar: Blanco */
-            
-            --card-bg: #FFFFFF; /* Fondo de tarjeta: Blanco puro */
-            --card-shadow: rgba(0,0,0,0.05); /* Sombra de tarjeta muy sutil */
-            --card-header-bg: #5A7F9D; /* Encabezado de tarjeta/tabla/modal: Gris azulado más claro */
-            --card-number-color: #343a40; /* Color de número de tarjeta (se mantiene oscuro para contraste) */
-            
-            /* Colores para alertas y botones de formulario específicos */
-            --btn-custom-bg: #5A7F9D; /* Gris azulado más claro para botones principales */
-            --btn-custom-hover-bg: #4A6572; /* Gris azulado ligeramente más oscuro */
-            --btn-clear-bg: #95A5A6; /* Gris Plata para "Limpiar" */
-            --btn-clear-hover-bg: #7F8C8D; /* Gris Plata más oscuro */
-            --form-control-focus-border: #5A7F9D; /* Borde de foco para input */
-            --form-control-focus-shadow: rgba(90, 127, 157, 0.25); /* Sombra de foco para input */
-            --alert-success-bg: #d4edda;
-            --alert-success-color: #155724;
-            --alert-success-border: #badbcc;
-            --alert-danger-bg: #f8d7da;
-            --alert-danger-color: #721c24;
-            --alert-danger-border: #f5c6cb;
-            --alert-success-icon-color: #28a745;
-            --alert-danger-icon-color: #DC3545;
-        }
-
-        body {
-            min-height: 100vh;
-            overflow-x: hidden;
-            font-family: 'Flexo Soft Demi', 'Inter', sans-serif; /* Aplica la nueva fuente primero */
-            background-color: var(--body-bg);
-            color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
-            padding-left: 220px;
-        }
+        --sidebar-bg: #2C3E50; /* Fondo de la barra lateral: Gris azulado oscuro */
+        --sidebar-text: #EAECEE; /* Color de texto del sidebar: Gris muy claro */
+        --sidebar-hover-bg: #34495E; /* Fondo al pasar el mouse por el sidebar: Gris azulado medio */
+        --sidebar-hover-text: #FFFFFF; /* Texto al pasar el mouse por el sidebar: Blanco */
         
-        /* Sidebar styling */
-        .sidebar {
-            position: fixed; top: 0; width: 220px; height: 100vh; background-color: var(--sidebar-bg);
-            padding-top: 1rem; box-shadow: 2px 0 5px var(--card-shadow); overflow-y: auto;
-            overflow-x: hidden; z-index: 1030; transition: left 0.3s ease; left: 0;
-        }
-        .sidebar .nav-link {
-            color: var(--sidebar-text); font-weight: 500; padding: 12px 20px;
-            transition: background-color 0.3s, color 0.3s; border-radius: 8px;
-            margin: 0 10px 5px 10px; display: flex; align-items: center;
-            justify-content: space-between; white-space: nowrap; overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .sidebar .nav-link i {
-            margin-right: 10px; font-size: 1.1rem; width: 20px; text-align: center; flex-shrink: 0;
-        }
-        .sidebar .nav-link span {
-            flex-grow: 1; flex-shrink: 1; min-width: 0;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background-color: var(--sidebar-hover-bg); color: var(--sidebar-hover-text);
-        }
-        .sidebar-brand {
-            color: var(--sidebar-hover-text); font-size: 1.8rem; font-weight: 700;
-            padding: 0 20px 1rem; border-bottom: 1px solid var(--sidebar-hover-bg);
-            margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; text-decoration: none;
-        }
-        .sidebar-brand svg {
-            margin-right: 10px; font-size: 2.2rem;
-        }
+        --card-bg: #FFFFFF; /* Fondo de tarjeta: Blanco puro */
+        --card-shadow: rgba(0,0,0,0.05); /* Sombra de tarjeta muy sutil */
+        --card-header-bg: #5A7F9D; /* Encabezado de tarjeta/tabla/modal: Gris azulado más claro */
+        --card-number-color: #343a40; /* Color de número de tarjeta (se mantiene oscuro para contraste) */
+        
+        /* Colores para alertas y botones de formulario específicos */
+        --btn-custom-bg: #5A7F9D; /* Gris azulado más claro para botones principales */
+        --btn-custom-hover-bg: #4A6572; /* Gris azulado ligeramente más oscuro */
+        --btn-clear-bg: #95A5A6; /* Gris Plata para "Limpiar" */
+        --btn-clear-hover-bg: #7F8C8D; /* Gris Plata más oscuro */
+        --form-control-focus-border: #5A7F9D; /* Borde de foco para input */
+        --form-control-focus-shadow: rgba(90, 127, 157, 0.25); /* Sombra de foco para input */
+        --alert-success-bg: #d4edda;
+        --alert-success-color: #155724;
+        --alert-success-border: #badbcc;
+        --alert-danger-bg: #f8d7da;
+        --alert-danger-color: #721c24;
+        --alert-danger-border: #f5c6cb;
+        --alert-success-icon-color: #28a745;
+        --alert-danger-icon-color: #DC3545;
+    }
 
-        /* Content area positioning */
-        .content {
-            margin-left: 0; padding: 2rem; position: relative;
-        }
-        h2 {
-            color: var(--text-color); transition: color 0.3s;
-        }
-        .card {
-            border-radius: 10px; box-shadow: 0 4px 10px var(--card-shadow);
-            transition: transform 0.2s ease-in-out, background-color 0.3s, box-shadow 0.3s;
-            background-color: var(--card-bg);
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .card-header {
-            /* Mantener el color de fondo y texto del tema */
-            background-color: var(--card-header-bg);
-            color: white;
-            font-weight: 600;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-            transition: background-color 0.3s;
-            /* Nuevos estilos para centrar el texto como en la imagen 2 */
-            text-align: center; /* Centra el texto del encabezado */
-            font-size: 1.1rem; /* Ajustar el tamaño de fuente si es necesario */
-            padding: 15px; /* Más padding para el encabezado */
-            text-transform: uppercase; /* Convertir a mayúsculas */
-        }
-        .card-body h3 {
-            font-size: 2.5rem; font-weight: 700; color: var(--card-number-color); transition: color 0.3s;
-        }
-        .card-text.text-muted {
-            color: var(--text-color) !important;
-        }
+    body {
+        min-height: 100vh;
+        overflow-x: hidden;
+        font-family: 'Flexo Soft Demi', 'Inter', sans-serif; /* Aplica la nueva fuente primero */
+        background-color: var(--body-bg);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+        padding-left: 220px;
+    }
+    
+    /* Sidebar styling */
+    .sidebar {
+        position: fixed; top: 0; width: 220px; height: 100vh; background-color: var(--sidebar-bg);
+        padding-top: 1rem; box-shadow: 2px 0 5px var(--card-shadow); overflow-y: auto;
+        overflow-x: hidden; z-index: 1030; transition: left 0.3s ease; left: 0;
+    }
+    .sidebar .nav-link {
+        color: var(--sidebar-text); font-weight: 500; padding: 12px 20px;
+        transition: background-color 0.3s, color 0.3s; border-radius: 8px;
+        margin: 0 10px 5px 10px; display: flex; align-items: center;
+        justify-content: space-between; white-space: nowrap; overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .sidebar .nav-link i {
+        margin-right: 10px; font-size: 1.1rem; width: 20px; text-align: center; flex-shrink: 0;
+    }
+    .sidebar .nav-link span {
+        flex-grow: 1; flex-shrink: 1; min-width: 0;
+    }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active {
+        background-color: var(--sidebar-hover-bg); color: var(--sidebar-hover-text);
+    }
+    .sidebar-brand {
+        color: var(--sidebar-hover-text); font-size: 1.8rem; font-weight: 700;
+        padding: 0 20px 1rem; border-bottom: 1px solid var(--sidebar-hover-bg);
+        margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; text-decoration: none;
+    }
+    .sidebar-brand svg {
+        margin-right: 10px; font-size: 2.2rem;
+    }
 
-        /* Styles for dropdown caret */
-        .dropdown-caret {
-            transition: transform 0.3s ease; margin-left: 8px; flex-shrink: 0; font-size: 0.9rem;
-        }
-        .nav-link[aria-expanded="true"] .dropdown-caret {
-            transform: rotate(-180deg);
-        }
+    /* Content area positioning */
+    .content {
+        margin-left: 0; padding: 2rem; position: relative;
+    }
+    h2 {
+        color: var(--text-color); transition: color 0.3s;
+    }
+    .card {
+        border-radius: 10px; box-shadow: 0 4px 10px var(--card-shadow);
+        transition: transform 0.2s ease-in-out, background-color 0.3s, box-shadow 0.3s;
+        background-color: var(--card-bg);
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .card-header {
+        background-color: var(--card-header-bg);
+        color: white;
+        font-weight: 600;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        transition: background-color 0.3s;
+        text-align: center;
+        font-size: 1.1rem;
+        padding: 15px;
+        text-transform: uppercase;
+    }
+    .card-body h3 {
+        font-size: 2.5rem; font-weight: 700; color: var(--card-number-color); transition: color 0.3s;
+    }
+    .card-text.text-muted {
+        color: var(--text-color) !important;
+    }
 
-        /* Styles for collapsible sub-menu items */
-        .sidebar .nav-item .collapse .nav-item {
-            margin-left: 20px; margin-bottom: 2px; margin-right: 0;
-        }
-        .sidebar .nav-item .collapse .nav-link {
-            justify-content: flex-start;
-        }
-        .sidebar .nav-item .collapse .nav-link i {
-            font-size: 0.95rem; width: 18px; flex-shrink: 0; margin-right: 8px; text-align: center;
-        }
+    /* Styles for dropdown caret */
+    .dropdown-caret {
+        transition: transform 0.3s ease; margin-left: 8px; flex-shrink: 0; font-size: 0.9rem;
+    }
+    .nav-link[aria-expanded="true"] .dropdown-caret {
+        transform: rotate(-180deg);
+    }
 
-        /* Specific styles for forms, tables, modals */
-        .btn-custom {
-            background-color: var(--btn-custom-bg); color: white; border-radius: 8px;
-            padding: 10px 20px; font-size: 1.1rem; transition: background-color 0.3s ease; border: none;
-        }
-        .btn-custom:hover {
-            background-color: var(--btn-custom-hover-bg); color: white;
-        }
+    /* Styles for collapsible sub-menu items */
+    .sidebar .nav-item .collapse .nav-item {
+        margin-left: 20px; margin-bottom: 2px; margin-right: 0;
+    }
+    .sidebar .nav-item .collapse .nav-link {
+        justify-content: flex-start;
+    }
+    .sidebar .nav-item .collapse .nav-link i {
+        font-size: 0.95rem; width: 18px; flex-shrink: 0; margin-right: 8px; text-align: center;
+    }
 
-        /* --- STYLES PARA LA TABLA (Mágia para parecerse a imagen 2) --- */
-        .table {
-            border-collapse: separate; /* IMPRESCINDIBLE para border-radius en celdas y filas */
-            border-spacing: 0; /* Elimina el espacio entre celdas */
-            border-radius: 10px; /* Redondea toda la tabla */
-            overflow: hidden; /* CORTA lo que exceda el radio de borde */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08); /* Sombra sutil para levantar la tabla */
-            background-color: var(--card-bg); /* Fondo blanco para toda la tabla */
-        }
+    /* Specific styles for forms, tables, modals */
+    .btn-custom {
+        background-color: var(--btn-custom-bg); color: white; border-radius: 8px;
+        padding: 10px 20px; font-size: 1.1rem; transition: background-color 0.3s ease; border: none;
+    }
+    .btn-custom:hover {
+        background-color: var(--btn-custom-hover-bg); color: white;
+    }
 
-        .table thead {
-            background-color: #F8F8F8; /* Fondo gris muy claro para el thead */
-            border-bottom: 1px solid #EEEEEE; /* Borde inferior sutil */
-        }
+    /* --- STYLES PARA LA TABLA (Mágia para parecerse a imagen 2) --- */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        background-color: var(--card-bg);
+    }
 
-        .table th {
-            color: #666666; /* Color de texto gris oscuro para los encabezados */
-            font-weight: bold; /* Negrita */
-            text-transform: uppercase; /* Mayúsculas */
-            font-size: 0.9em; /* Un poco más pequeño que el cuerpo */
-            padding: 15px 20px; /* Padding generoso */
-            border: none; /* Eliminar bordes internos del encabezado */
-            text-align: left; /* Alineación a la izquierda por defecto */
-        }
+    .table thead {
+        background-color: #F8F8F8; /* Fondo gris muy claro para el thead */
+        border-bottom: 1px solid #EEEEEE; /* Borde inferior sutil */
+    }
 
-        .table th:first-child { border-top-left-radius: 10px; }
-        .table th:last-child { border-top-right-radius: 10px; }
+    .table th {
+        color: #666666; /* Color de texto gris oscuro para los encabezados */
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.9em;
+        padding: 15px 20px;
+        border: none;
+        text-align: left;
+    }
 
-        .table tbody tr {
-            background-color: var(--card-bg); /* Fondo blanco para todas las filas */
-            border-bottom: 1px solid #EEEEEE; /* Borde inferior sutil para cada fila */
-        }
+    .table th:first-child { border-top-left-radius: 10px; }
+    .table th:last-child { border-top-right-radius: 10px; }
 
-        .table tbody tr:last-child {
-            border-bottom: none; /* No hay borde en la última fila */
-        }
-        /* Para que los bordes redondeados inferiores se apliquen correctamente */
-        .table tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
-        .table tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+    /* Modificación clave aquí para evitar el "celeste" */
+    .table tbody tr {
+        background-color: var(--card-bg) !important; /* Forzamos el fondo blanco para todas las filas */
+        border-bottom: 1px solid #EEEEEE;
+    }
 
-
-        .table td {
-            padding: 12px 20px; /* Padding consistente para celdas de datos */
-            color: var(--text-color); /* Color de texto para los datos */
-            border: none; /* Eliminar bordes internos de las celdas */
-            vertical-align: middle; /* Alineación vertical al medio */
-            font-size: 0.95em; /* Tamaño de fuente ligeramente ajustado */
-        }
-
-        /* Eliminar estilos de tabla de Bootstrap que puedan interferir */
-        .table-striped tbody tr:nth-of-type(odd) {
-            background-color: var(--card-bg); /* Forzamos blanco para todas las filas */
-        }
-        .table-hover tbody tr:hover {
-            background-color: #F5F5F5; /* Un gris muy sutil para el hover */
-        }
-
-
-        /* Estilos para los iconos de acción dentro de la tabla */
-        .table .action-icons-cell {
-            text-align: right; /* Alinea el contenido de esta celda a la derecha */
-            white-space: nowrap; /* Evita que los iconos se envuelvan */
-            padding-right: 25px; /* Más padding a la derecha para empujar los iconos */
-        }
-
-        .table .icon-action {
-            text-decoration: none !important; /* Quita el subrayado de los LinkButtons/enlaces */
-            display: inline-flex; /* Usa flex para centrar iconos */
-            align-items: center; /* Centrar verticalmente */
-            justify-content: center; /* Centrar horizontalmente */
-            width: 30px; /* Ancho fijo para el área del icono */
-            height: 30px; /* Alto fijo para el área del icono */
-            border-radius: 50%; /* Hace que el fondo del hover sea redondo */
-            color: #666666; /* Color gris para los iconos por defecto */
-            font-size: 1.1em; /* Tamaño del icono */
-            transition: all 0.2s ease-in-out;
-            background-color: transparent; /* Fondo transparente por defecto */
-            border: none; /* Eliminar bordes */
-            cursor: pointer; /* Indica que es clickeable */
-        }
-        .table .icon-action:hover {
-            background-color: rgba(0,0,0,0.05); /* Fondo gris claro al pasar el mouse */
-            color: #333333; /* Color más oscuro al pasar el mouse */
-            transform: translateY(-2px); /* Pequeño efecto de levantamiento */
-        }
-        /* Color específico para el icono de editar (lápiz) */
-        .table .icon-action.edit-icon {
-            color: #007bff; /* Azul de Bootstrap */
-        }
-        /* Color específico para el icono de eliminar (tacho) */
-        .table .icon-action.delete-icon {
-            color: #dc3545; /* Rojo de Bootstrap */
-        }
-
-        /* Espacio entre los iconos */
-        .table .icon-action + .icon-action {
-            margin-left: 10px; /* Espacio entre iconos adyacentes */
-        }
+    .table tbody tr:last-child {
+        border-bottom: none;
+    }
+    .table tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
+    .table tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
 
 
-        /* Otros estilos que ya tenías */
-        .modal-header {
-            background-color: var(--card-header-bg); color: white; border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-        .modal-content {
-            border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.2);
-        }
-        .form-control { border-radius: 8px; }
-        .btn { border-radius: 8px; }
-        .alert {
-            border-radius: 8px; padding: 10px 15px; margin-bottom: 15px; font-size: 0.95rem;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); word-wrap: break-word; white-space: normal;
-        }
-        .alert-success { background-color: var(--alert-success-bg); color: var(--alert-success-color); border-color: var(--alert-success-border); }
-        .alert-danger { background-color: var(--alert-danger-bg); color: var(--alert-danger-color); border-color: var(--alert-danger-border); }
-        .alert-danger::before { content: "\2716"; font-size: 1.2rem; margin-right: 0.5rem; vertical-align: middle; display: inline-block; line-height: 1; color: var(--alert-danger-icon-color); }
-        .alert-success::before { content: "\2714"; font-size: 1.2rem; margin-right: 0.5rem; vertical-align: middle; display: inline-block; line-height: 1; color: var(--alert-success-icon-color); }
+    .table td {
+        padding: 12px 20px;
+        color: var(--text-color);
+        border: none;
+        vertical-align: middle;
+        font-size: 0.95em;
+    }
 
-        .search-input-group .form-control { border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-top-right-radius: 0; border-bottom-right-radius: 0; border-color: #ced4da; box-shadow: none; }
-        .search-input-group .form-control:focus { border-color: var(--form-control-focus-border); box-shadow: 0 0 0 0.25rem var(--form-control-focus-shadow); }
-        .search-input-group .btn { border-radius: 0; font-weight: 600; padding-left: 1rem; padding-right: 1rem; }
-        .search-input-group #btnBuscarSubcategoria { background-color: var(--btn-custom-bg); color: white; border-color: var(--btn-custom-bg); border-top-right-radius: 0; border-bottom-right-radius: 0; }
-        .search-input-group #btnBuscarSubcategoria:hover { background-color: var(--btn-custom-hover-bg); border-color: var(--btn-custom-hover-bg); }
-        .search-input-group #btnLimpiarBusquedaSubcategoria { background-color: var(--btn-clear-bg); color: white; border-color: var(--btn-clear-bg); border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
-        .search-input-group #btnLimpiarBusquedaSubcategoria:hover { background-color: var(--btn-clear-hover-bg); border-color: var(--btn-clear-hover-bg); }
-        .search-input-group .btn:not(:last-child) { border-right: 1px solid rgba(0,0,0,.125); }
+    /* Sobreescribir .table-striped y .table-hover si aún causan problemas */
+    .table.table-striped tbody tr:nth-of-type(odd) {
+        background-color: var(--card-bg) !important; /* Asegura el blanco en filas impares */
+    }
+    .table.table-hover tbody tr:hover {
+        background-color: #F5F5F5 !important; /* Asegura el gris sutil al hover */
+    }
+    
+    /* Para GridView si estás usando HeaderStyle CssClass="thead-light" */
+    /* Asegúrate de que no haya un background-color de thead-light que cause conflicto */
+    .table thead.thead-light th {
+        background-color: #F8F8F8 !important; /* Sobrescribe cualquier color de thead-light */
+        color: #666666 !important;
+    }
 
-        /* Modal width adjustments */
-        .modal-dialog { max-width: 600px; width: 90%; }
-        @media (min-width: 576px) { .modal-dialog { max-width: 650px; } }
-        @media (min-width: 768px) { .modal-dialog { max-width: 700px; } }
 
-        /* Responsive styles */
-        @media (max-width: 767.98px) {
-            .sidebar { left: -220px; box-shadow: none; z-index: 1040; }
-            .sidebar.show { left: 0; box-shadow: 2px 0 5px var(--card-shadow); }
-            body { padding-left: 0; padding-top: 5rem; }
-            .content { padding: 1rem; }
-            #sidebarToggle {
-                display: flex !important; position: fixed; top: 15px; left: 15px; z-index: 1050;
-                border-radius: 50%; width: 45px; height: 45px; align-items: center; justify-content: center;
-                background-color: var(--sidebar-bg); border-color: var(--sidebar-hover-bg); color: var(--sidebar-text);
-                transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-            }
-            #sidebarToggle:hover { background-color: var(--sidebar-hover-bg); color: var(--sidebar-hover-text); }
-            .sidebar-backdrop {
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background-color: rgba(0, 0, 0, 0.5); z-index: 1039; display: none; transition: opacity 0.3s ease; opacity: 0;
-            }
-            .sidebar-backdrop.show { display: block; opacity: 1; }
-            body.overflow-hidden { overflow: hidden; }
+    /* Estilos para los iconos de acción dentro de la tabla */
+    .table .action-icons-cell {
+        text-align: right;
+        white-space: nowrap;
+        padding-right: 25px;
+    }
+
+    .table .icon-action {
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        color: #666666;
+        font-size: 1.1em;
+        transition: all 0.2s ease-in-out;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+    }
+    .table .icon-action:hover {
+        background-color: rgba(0,0,0,0.05);
+        color: #333333;
+        transform: translateY(-2px);
+    }
+    .table .icon-action.edit-icon {
+        color: #007bff;
+    }
+    .table .icon-action.delete-icon {
+        color: #dc3545;
+    }
+    .table .icon-action + .icon-action {
+        margin-left: 10px;
+    }
+
+
+    /* Otros estilos que ya tenías */
+    .modal-header {
+        background-color: var(--card-header-bg); color: white; border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    .modal-content {
+        border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    }
+    .form-control { border-radius: 8px; }
+    .btn { border-radius: 8px; }
+    .alert {
+        border-radius: 8px; padding: 10px 15px; margin-bottom: 15px; font-size: 0.95rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); word-wrap: break-word; white-space: normal;
+    }
+    .alert-success { background-color: var(--alert-success-bg); color: var(--alert-success-color); border-color: var(--alert-success-border); }
+    .alert-danger { background-color: var(--alert-danger-bg); color: var(--alert-danger-color); border-color: var(--alert-danger-border); }
+    .alert-danger::before { content: "\2716"; font-size: 1.2rem; margin-right: 0.5rem; vertical-align: middle; display: inline-block; line-height: 1; color: var(--alert-danger-icon-color); }
+    .alert-success::before { content: "\2714"; font-size: 1.2rem; margin-right: 0.5rem; vertical-align: middle; display: inline-block; line-height: 1; color: var(--alert-success-icon-color); }
+
+    .search-input-group .form-control { border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-top-right-radius: 0; border-bottom-right-radius: 0; border-color: #ced4da; box-shadow: none; }
+    .search-input-group .form-control:focus { border-color: var(--form-control-focus-border); box-shadow: 0 0 0 0.25rem var(--form-control-focus-shadow); }
+    .search-input-group .btn { border-radius: 0; font-weight: 600; padding-left: 1rem; padding-right: 1rem; }
+    .search-input-group #btnBuscarSubcategoria { background-color: var(--btn-custom-bg); color: white; border-color: var(--btn-custom-bg); border-top-right-radius: 0; border-bottom-right-radius: 0; }
+    .search-input-group #btnBuscarSubcategoria:hover { background-color: var(--btn-custom-hover-bg); border-color: var(--btn-custom-hover-bg); }
+    .search-input-group #btnLimpiarBusquedaSubcategoria { background-color: var(--btn-clear-bg); color: white; border-color: var(--btn-clear-bg); border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+    .search-input-group #btnLimpiarBusquedaSubcategoria:hover { background-color: var(--btn-clear-hover-bg); border-color: var(--btn-clear-hover-bg); }
+    .search-input-group .btn:not(:last-child) { border-right: 1px solid rgba(0,0,0,.125); }
+
+    /* Modal width adjustments */
+    .modal-dialog { max-width: 600px; width: 90%; }
+    @media (min-width: 576px) { .modal-dialog { max-width: 650px; } }
+    @media (min-width: 768px) { .modal-dialog { max-width: 700px; } }
+
+    /* Responsive styles */
+    @media (max-width: 767.98px) {
+        .sidebar { left: -220px; box-shadow: none; z-index: 1040; }
+        .sidebar.show { left: 0; box-shadow: 2px 0 5px var(--card-shadow); }
+        body { padding-left: 0; padding-top: 5rem; }
+        .content { padding: 1rem; }
+        #sidebarToggle {
+            display: flex !important; position: fixed; top: 15px; left: 15px; z-index: 1050;
+            border-radius: 50%; width: 45px; height: 45px; align-items: center; justify-content: center;
+            background-color: var(--sidebar-bg); border-color: var(--sidebar-hover-bg); color: var(--sidebar-text);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
-    </style>
+        #sidebarToggle:hover { background-color: var(--sidebar-hover-bg); color: var(--sidebar-hover-text); }
+        .sidebar-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); z-index: 1039; display: none; transition: opacity 0.3s ease; opacity: 0;
+        }
+        .sidebar-backdrop.show { display: block; opacity: 1; }
+        body.overflow-hidden { overflow: hidden; }
+    }
+</style>
 </head>
 <body>
     <form id="form1" runat="server">
@@ -424,7 +425,7 @@
 
             <!-- Botón para abrir el Modal de Añadir/Editar -->
             <div class="d-flex justify-content-end align-items-center mb-4">
-                <button type="button" class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#clienteModal" data-mode="add">
+                <button type="button" class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#subcategoriaModal" data-mode="add">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus me-2" viewBox="0 0 16 16">
                         <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
                         <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
@@ -446,8 +447,8 @@
 
             <!-- GridView para mostrar las subcategorías existentes -->
             <asp:GridView ID="gvSubcategorias" runat="server" AutoGenerateColumns="False" OnRowCommand="gvSubcategorias_RowCommand"
-                CssClass="table table-bordered table-striped table-hover"
-                HeaderStyle-CssClass="table-primary"
+                CssClass="table table-bordered  table-hover"
+                
                 DataKeyNames="SubcategoriaID, CategoriaProductoID"> <%-- Claves de datos para una edición robusta --%>
                 <Columns>
                     <%-- Las columnas se muestran en el orden que se definen aquí --%>
