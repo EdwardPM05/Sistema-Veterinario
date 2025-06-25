@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
 using System.Text.RegularExpressions; // Necesario para expresiones regulares
 using System.Web.UI; // Necesario para ScriptManager
 using System.Web.UI.WebControls;
@@ -340,6 +341,113 @@ namespace VetWeb
             ScriptManager.RegisterStartupScript(this, this.GetType(), "ScrollToMessageCategoriaProducto", "var modalBody = document.querySelector('#categoriaProductoModal .modal-body'); if(modalBody) modalBody.scrollTop = 0;", true);
         }
 
+
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtCategorias = new DataTable();
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarNombreCategoria.Text.Trim()) ? "Ninguno" : txtBuscarNombreCategoria.Text.Trim();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de las categorías de productos (aplicando el filtro de búsqueda actual si lo hay)
+                string query = "SELECT NombreCategoria FROM CategoriasProductos";
+
+                if (!string.IsNullOrEmpty(txtBuscarNombreCategoria.Text.Trim()))
+                {
+                    query += " WHERE NombreCategoria LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY NombreCategoria"; // Ordenar para una visualización consistente
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarNombreCategoria.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarNombreCategoria.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtCategorias);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtCategorias.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de categorías de productos para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                // Configurar la respuesta para descargar un archivo Excel
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel"; // MIME type para Excel 97-2003
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteCategoriasProductos_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble()); // Para UTF-8 con BOM
+
+                // Usar StringBuilder para construir el contenido HTML de la tabla
+                StringBuilder sb = new StringBuilder();
+
+                // Cabecera HTML para Excel (opcional pero recomendable para una mejor compatibilidad)
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>CategoriasProductos</x:Name>");
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='1' align='center'><b>REPORTE DE CATEGORÍAS DE PRODUCTOS</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='1' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='1' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>");
+                sb.Append("<br>"); // Salto de línea para separar el encabezado de la tabla de datos
+
+                // Crear la tabla HTML para los datos
+                // Solo tenemos una columna de datos: NombreCategoria
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Añadir fila de encabezados
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                sb.Append("<th>Nombre de Categoría</th>"); // Solo un encabezado
+                sb.Append("</tr>");
+
+                // Añadir filas de datos
+                foreach (DataRow row in dtCategorias.Rows)
+                {
+                    sb.Append("<tr>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["NombreCategoria"].ToString()) + "</td>"); // Solo una columna de datos
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+
+                // Notas al pie de página (opcional en Excel, pero podemos incluirlo)
+                sb.Append("<br>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 9pt; color: #808080;'><tr><td colspan='1' align='center'>Este es un reporte interno de categorías de productos de VetWeb.</td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 8pt; color: #C0C0C0;'><tr><td colspan='1' align='center'>Generado por VetWeb - Tu solución para la gestión veterinaria.</td></tr></table>");
+
+                sb.Append("</body></html>");
+
+                // Escribir el contenido en el flujo de respuesta
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
+            }
+        }
         /// <summary>
         /// Maneja el evento de clic del botón de búsqueda.
         /// Filtra la lista de categorías de productos basada en el término de búsqueda.
@@ -358,5 +466,6 @@ namespace VetWeb
             txtBuscarNombreCategoria.Text = ""; // Limpiar el textbox de búsqueda
             CargarCategoriasProductos(); // Recargar todas las categorías sin filtro
         }
+
     }
 }
