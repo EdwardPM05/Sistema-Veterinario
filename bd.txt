@@ -109,3 +109,14 @@ CREATE TABLE CitaServicios (
     FOREIGN KEY (CitaID) REFERENCES Citas(CitaID),
     FOREIGN KEY (ServicioID) REFERENCES Servicios(ServicioID)
 );
+
+SELECT name
+FROM sys.check_constraints
+WHERE parent_object_id = OBJECT_ID('dbo.Mascotas') AND col_name(parent_object_id, parent_column_id) = 'Sexo';
+
+-- Reemplaza [NombreDeLaRestriccion] con el nombre real que obtuviste.
+ALTER TABLE Mascotas
+DROP CONSTRAINT CK__Mascotas__Sexo__52593CB8;
+
+ALTER TABLE Mascotas
+ADD CONSTRAINT CK_Mascotas_Sexo_MH CHECK (Sexo IN ('M', 'H'));

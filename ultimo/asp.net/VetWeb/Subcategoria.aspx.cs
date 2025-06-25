@@ -2,9 +2,14 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text.RegularExpressions; // Necesario para expresiones regulares
-using System.Web.UI; // Necesario para ScriptManager
+using System.Text.RegularExpressions;
+using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.IO; // Necesario para MemoryStream y File
+using iTextSharp.text; // Necesario para Document, Image, Font, Paragraph, BaseColor
+using iTextSharp.text.pdf; // Necesario para PdfWriter, PdfPTable, PdfPCell
+using System.Linq; // Necesario para Enumerable.Repeat (si se usa en la lógica de anchos)
+using System.Text; // Necesario para StringBuilder
 
 namespace VetWeb
 {
@@ -42,7 +47,7 @@ namespace VetWeb
                 ddlCategoriasProducto.DataTextField = "NombreCategoria";
                 ddlCategoriasProducto.DataValueField = "CategoriaProductoID";
                 ddlCategoriasProducto.DataBind();
-                ddlCategoriasProducto.Items.Insert(0, new ListItem("Seleccione una categoría", "")); // Opción por defecto
+                ddlCategoriasProducto.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una categoría", "")); // Opción por defecto
             }
         }
 
@@ -244,7 +249,7 @@ namespace VetWeb
                 {
                     // Si el CategoriaProductoID no se encuentra, selecciona la opción por defecto y muestra una advertencia.
                     ddlCategoriasProducto.ClearSelection();
-                    ddlCategoriasProducto.Items.Insert(0, new ListItem("Seleccione una categoría", "")); // Asegura la opción por defecto
+                    ddlCategoriasProducto.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una categoría", "")); // Asegura la opción por defecto
                     ddlCategoriasProducto.Items.FindByValue("").Selected = true;
                     MostrarMensaje("Advertencia: La categoría principal asociada a esta subcategoría no se encontró. Por favor, seleccione una nueva.", false);
                 }
@@ -385,6 +390,235 @@ namespace VetWeb
                 "var modalBody = document.querySelector('#subcategoriaModal .modal-body'); if(modalBody) modalBody.scrollTop = 0;", true);
         }
 
+        // Asegúrate de que este botón btnImprimirPdf exista en tu archivo .aspx
+        protected void btnImprimirPdf_Click(object sender, EventArgs e)
+        {
+            DataTable dtSubcategorias = new DataTable();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de las subcategorías (aplicando el filtro de búsqueda actual si lo hay)
+                string query = @"
+            SELECT
+                S.Nombre AS NombreSubcategoria,
+                C.NombreCategoria
+            FROM Subcategoria S
+            INNER JOIN CategoriasProductos C ON S.CategoriaProductoID = C.CategoriaProductoID";
+
+                if (!string.IsNullOrEmpty(txtBuscarSubcategoria.Text.Trim()))
+                {
+                    query += " WHERE S.Nombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR C.NombreCategoria LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY S.Nombre";
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarSubcategoria.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarSubcategoria.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtSubcategorias);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el PDF: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtSubcategorias.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de subcategorías para generar el PDF con el filtro actual.", false);
+                return;
+            }
+
+            // Crear el documento PDF
+            Document doc = new Document(PageSize.A4, 30f, 30f, 40f, 30f); // Márgenes (izquierda, derecha, arriba, abajo) ajustados
+
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    PdfWriter writer = PdfWriter.GetInstance(doc, ms);
+                    doc.Open();
+
+                    // ====================================================================
+                    // 1. ENCABEZADO DEL DOCUMENTO (Logo, Info de la Clínica, Título)
+                    // ====================================================================
+
+                    // Tabla principal para el encabezado (Logo a la izquierda, info de la empresa a la derecha)
+                    PdfPTable headerTable = new PdfPTable(2);
+                    headerTable.WidthPercentage = 100;
+                    headerTable.SetWidths(new float[] { 1f, 3f }); // Ancho para logo y ancho para info de la empresa
+                    headerTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                    headerTable.SpacingAfter = 20f;
+
+                    // Celda 1: Logo de la Patita
+                    string logoPath = Server.MapPath("~/Assets/Images/logo.png"); // <--- ¡VERIFICA ESTA RUTA!
+                    if (File.Exists(logoPath))
+                    {
+                        iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(logoPath);
+                        logo.ScaleToFit(70f, 70f); // Ajustar tamaño del logo
+                        PdfPCell logoCell = new PdfPCell(logo);
+                        logoCell.Border = PdfPCell.NO_BORDER;
+                        logoCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                        logoCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                        logoCell.Padding = 5;
+                        headerTable.AddCell(logoCell);
+                    }
+                    else
+                    {
+                        // Si el logo no se encuentra, añadir una celda vacía o un placeholder
+                        headerTable.AddCell(new PdfPCell(new Phrase("Logo no encontrado", FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 8, BaseColor.RED))) { Border = PdfPCell.NO_BORDER });
+                    }
+
+                    // Celda 2: Información de la Empresa (VetWeb)
+                    PdfPCell companyInfoCell = new PdfPCell();
+                    companyInfoCell.Border = PdfPCell.NO_BORDER;
+                    companyInfoCell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                    companyInfoCell.VerticalAlignment = Element.ALIGN_TOP;
+                    companyInfoCell.Padding = 5;
+
+                    Font fontCompanyName = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18, new BaseColor(54, 80, 106)); // Color similar al encabezado de tu GridView
+                    Font fontCompanyDetails = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+
+                    companyInfoCell.AddElement(new Paragraph("VETWEB", fontCompanyName) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Villa el Salvador, Lima, Perú", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Teléfono: +51 907377938", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Email: info@vetweb.com", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+
+                    headerTable.AddCell(companyInfoCell);
+                    doc.Add(headerTable);
+
+                    // Título del Reporte
+                    Font reportTitleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20, BaseColor.DARK_GRAY);
+                    Paragraph reportTitle = new Paragraph("REPORTE DE SUBCATEGORÍAS", reportTitleFont);
+                    reportTitle.Alignment = Element.ALIGN_CENTER;
+                    reportTitle.SpacingAfter = 15f;
+                    doc.Add(reportTitle);
+
+                    // Información del Documento (Folio, Fecha de Generación, Filtro Aplicado)
+                    PdfPTable docDetailsTable = new PdfPTable(2);
+                    docDetailsTable.WidthPercentage = 100;
+                    docDetailsTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                    docDetailsTable.SetWidths(new float[] { 1f, 1f });
+                    docDetailsTable.SpacingAfter = 10f;
+
+                    Font fontDocDetails = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.DARK_GRAY);
+
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"FOLIO: {new Random().Next(100000, 999999)}", fontDocDetails)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"Fecha de Generación: {DateTime.Now:dd/MM/yyyy HH:mm:ss}", fontDocDetails)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_RIGHT });
+
+                    string filtroAplicado = string.IsNullOrEmpty(txtBuscarSubcategoria.Text.Trim()) ? "Ninguno" : txtBuscarSubcategoria.Text.Trim();
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"Filtro aplicado: \"{filtroAplicado}\"", fontDocDetails)) { Colspan = 2, Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
+
+                    doc.Add(docDetailsTable);
+
+                    // ====================================================================
+                    // 2. TABLA DE DATOS DE SUBCATEGORÍAS
+                    // ====================================================================
+
+                    // Crear la tabla PDF
+                    PdfPTable pdfTable = new PdfPTable(dtSubcategorias.Columns.Count);
+                    pdfTable.WidthPercentage = 100; // Ocupar el 100% del ancho disponible
+                    pdfTable.SpacingBefore = 10f; // Espacio antes de la tabla
+                    pdfTable.DefaultCell.Padding = 5; // Padding de las celdas
+                    pdfTable.HeaderRows = 1; // Para que el encabezado se repita en cada página
+
+                    // Configurar anchos de columna (ajusta estos valores según tus datos reales para que no se superpongan)
+                    // Las columnas son: NombreSubcategoria, NombreCategoria
+                    float[] widths = new float[] { 2f, 2f }; // Anchos ajustados para subcategoría y categoría principal
+                    if (dtSubcategorias.Columns.Count == widths.Length)
+                    {
+                        pdfTable.SetWidths(widths);
+                    }
+                    else
+                    {
+                        // Fallback si el número de columnas no coincide (distribuye equitativamente)
+                        pdfTable.SetWidths(Enumerable.Repeat(1f, dtSubcategorias.Columns.Count).ToArray());
+                    }
+
+                    // Añadir encabezados de columna
+                    Font fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.WHITE);
+                    BaseColor headerColor = new BaseColor(54, 80, 106); // Un azul/gris oscuro, similar al de tu GridView
+                    string[] headers = { "Nombre de Subcategoría", "Categoría Principal" }; // Nombres amigables para el encabezado
+
+                    for (int i = 0; i < dtSubcategorias.Columns.Count; i++)
+                    {
+                        PdfPCell headerCell = new PdfPCell(new Phrase(headers[i], fontHeader));
+                        headerCell.BackgroundColor = headerColor;
+                        headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                        headerCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                        headerCell.Padding = 7; // Más padding para encabezados
+                        headerCell.BorderColor = BaseColor.LIGHT_GRAY; // Bordes sutiles
+                        pdfTable.AddCell(headerCell);
+                    }
+
+                    // Añadir filas de datos
+                    Font fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+                    foreach (DataRow row in dtSubcategorias.Rows)
+                    {
+                        for (int i = 0; i < dtSubcategorias.Columns.Count; i++)
+                        {
+                            PdfPCell dataCell = new PdfPCell(new Phrase(row[i].ToString(), fontCell));
+                            dataCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                            dataCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                            dataCell.Padding = 5;
+                            // Alternar color de fondo para filas para mejor legibilidad
+                            if (dtSubcategorias.Rows.IndexOf(row) % 2 == 0)
+                            {
+                                dataCell.BackgroundColor = new BaseColor(245, 245, 245); // Gris muy claro para alternancia
+                            }
+                            dataCell.BorderColor = BaseColor.LIGHT_GRAY; // Bordes sutiles
+                            pdfTable.AddCell(dataCell);
+                        }
+                    }
+
+                    doc.Add(pdfTable);
+
+                    // ====================================================================
+                    // 3. PIE DE PÁGINA DEL DOCUMENTO (Notas, etc.)
+                    // ====================================================================
+                    Font fontFooter = FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 9, BaseColor.GRAY);
+                    Paragraph footerNote = new Paragraph("Este es un reporte interno de subcategorías de VetWeb.", fontFooter);
+                    footerNote.Alignment = Element.ALIGN_CENTER;
+                    footerNote.SpacingBefore = 20f;
+                    doc.Add(footerNote);
+
+                    Paragraph thankYouNote = new Paragraph("Generado por VetWeb - Tu solución para la gestión veterinaria.", FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.LIGHT_GRAY));
+                    thankYouNote.Alignment = Element.ALIGN_CENTER;
+                    doc.Add(thankYouNote);
+
+                    doc.Close();
+
+                    // Enviar el PDF al navegador
+                    Response.ContentType = "application/pdf";
+                    Response.AddHeader("content-disposition", "attachment;filename=ReporteSubcategorias.pdf");
+                    Response.Buffer = true;
+                    Response.Clear();
+                    Response.BinaryWrite(ms.ToArray());
+                    Response.End();
+                }
+            }
+            catch (Exception ex)
+            {
+                // En un ambiente de producción, aquí deberías loguear el error y mostrar un mensaje más amigable
+                MostrarMensaje("Error al generar el PDF: " + ex.Message, false);
+            }
+            finally
+            {
+                // Asegurarse de que el documento se cierre incluso si hay un error en la generación
+                if (doc.IsOpen())
+                {
+                    doc.Close();
+                }
+            }
+        }
         /// <summary>
         /// Maneja el evento de clic del botón de búsqueda.
         /// Filtra la lista de subcategorías basada en el término de búsqueda.
@@ -402,6 +636,111 @@ namespace VetWeb
         {
             txtBuscarSubcategoria.Text = ""; // Limpiar el textbox de búsqueda
             CargarSubcategorias(); // Recargar todas las subcategorías sin filtro
+        }
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtSubcategorias = new DataTable();
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarSubcategoria.Text.Trim()) ? "Ninguno" : txtBuscarSubcategoria.Text.Trim(); // <--- AÑADE ESTA LÍNEA
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de las subcategorías (aplicando el filtro de búsqueda actual si lo hay)
+                string query = @"
+                    SELECT
+                        S.Nombre AS NombreSubcategoria,
+                        C.NombreCategoria
+                    FROM Subcategoria S
+                    INNER JOIN CategoriasProductos C ON S.CategoriaProductoID = C.CategoriaProductoID";
+
+                if (!string.IsNullOrEmpty(txtBuscarSubcategoria.Text.Trim()))
+                {
+                    query += " WHERE S.Nombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR C.NombreCategoria LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY S.Nombre";
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarSubcategoria.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarSubcategoria.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtSubcategorias);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtSubcategorias.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de subcategorías para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel";
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteSubcategorias_" + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble());
+
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>Subcategorias</x:Name>");
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='" + dtSubcategorias.Columns.Count + "' align='center'><b>REPORTE DE SUBCATEGORÍAS</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='" + dtSubcategorias.Columns.Count + "' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='" + dtSubcategorias.Columns.Count + "' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>"); // Usa filtroAplicado aquí
+                sb.Append("<br>");
+
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                sb.Append("<th>Nombre de Subcategoría</th>");
+                sb.Append("<th>Categoría Principal</th>");
+                sb.Append("</tr>");
+
+                foreach (DataRow row in dtSubcategorias.Rows)
+                {
+                    sb.Append("<tr>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["NombreSubcategoria"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["NombreCategoria"].ToString()) + "</td>");
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+
+                sb.Append("<br>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 9pt; color: #808080;'><tr><td colspan='" + dtSubcategorias.Columns.Count + "' align='center'>Este es un reporte interno de subcategorías de VetWeb.</td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 8pt; color: #C0C0C0;'><tr><td colspan='" + dtSubcategorias.Columns.Count + "' align='center'>Generado por VetWeb - Tu solución para la gestión veterinaria.</td></tr></table>");
+
+                sb.Append("</body></html>");
+
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
+            }
         }
     }
 }
