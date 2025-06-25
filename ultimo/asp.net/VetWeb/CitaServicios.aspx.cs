@@ -2,10 +2,14 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Globalization; // Necesario para CultureInfo
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using iTextSharp.text; // Importa iTextSharp
+using iTextSharp.text.pdf; // Importa iTextSharp.pdf
+using System.IO; // Necesario para MemoryStream
+using System.Linq; // Necesario para Enumerable.Repeat
 
 namespace VetWeb
 {
@@ -62,7 +66,7 @@ namespace VetWeb
                 }
 
                 ddlCitas.DataBind();
-                ddlCitas.Items.Insert(0, new ListItem("Seleccione una Cita", ""));
+                ddlCitas.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una Cita", ""));
             }
         }
 
@@ -80,7 +84,7 @@ namespace VetWeb
                 ddlServicios.DataTextField = "NombreServicio";
                 ddlServicios.DataValueField = "ServicioID";
                 ddlServicios.DataBind();
-                ddlServicios.Items.Insert(0, new ListItem("Seleccione un Servicio", ""));
+                ddlServicios.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione un Servicio", ""));
             }
         }
 
@@ -593,5 +597,360 @@ namespace VetWeb
             ScriptManager.RegisterStartupScript(this, this.GetType(), "ScrollToMessageCitaServicio" + Guid.NewGuid().ToString(),
                 "var modalBody = document.querySelector('#citaServicioModal .modal-body'); if(modalBody) modalBody.scrollTop = 0;", true);
         }
+        protected void btnImprimirPdf_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(hfSelectedCitaID.Value))
+            {
+                MostrarMensaje("Por favor, seleccione una cita para generar el reporte de servicios.", false);
+                return;
+            }
+
+            int selectedCitaID = Convert.ToInt32(hfSelectedCitaID.Value);
+            DataTable dtCitaServicios = new DataTable();
+            DataTable dtCitaInfo = new DataTable();
+            decimal totalCita = 0;
+
+            // 1. Obtener la información general de la cita
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                string queryCitaInfo = @"
+                    SELECT
+                        C.CitaID,
+                        C.Fecha,
+                        Cl.PrimerNombre + ' ' + Cl.ApellidoPaterno AS NombreCliente,
+                        M.Nombre AS NombreMascota,
+                        E.PrimerNombre + ' ' + E.ApellidoPaterno AS NombreEmpleado
+                    FROM Citas C
+                    INNER JOIN Mascotas M ON C.MascotaID = M.MascotaID
+                    INNER JOIN Clientes Cl ON M.ClienteID = Cl.ClienteID
+                    INNER JOIN Empleados E ON C.EmpleadoID = E.EmpleadoID
+                    WHERE C.CitaID = @CitaID";
+
+                SqlCommand cmdCitaInfo = new SqlCommand(queryCitaInfo, con);
+                cmdCitaInfo.Parameters.AddWithValue("@CitaID", selectedCitaID);
+                SqlDataAdapter daCitaInfo = new SqlDataAdapter(cmdCitaInfo);
+
+                try
+                {
+                    con.Open();
+                    daCitaInfo.Fill(dtCitaInfo);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al obtener la información de la cita para el PDF: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtCitaInfo.Rows.Count == 0)
+            {
+                MostrarMensaje("No se encontró información para la cita seleccionada.", false);
+                return;
+            }
+
+            DataRow citaRow = dtCitaInfo.Rows[0];
+            string fechaCita = Convert.ToDateTime(citaRow["Fecha"]).ToString("dd/MM/yyyy");
+            string nombreCliente = citaRow["NombreCliente"].ToString();
+            string nombreMascota = citaRow["NombreMascota"].ToString();
+            string nombreEmpleado = citaRow["NombreEmpleado"].ToString();
+
+            // 2. Obtener los servicios asociados a la cita y calcular el total
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                string queryServicios = @"
+                    SELECT
+                        S.NombreServicio,
+                        CS.Cantidad,
+                        CS.PrecioUnitario,
+                        (CS.Cantidad * CS.PrecioUnitario) AS Subtotal
+                    FROM CitaServicios CS
+                    INNER JOIN Servicios S ON CS.ServicioID = S.ServicioID
+                    WHERE CS.CitaID = @CitaID
+                    ORDER BY S.NombreServicio";
+
+                SqlCommand cmdServicios = new SqlCommand(queryServicios, con);
+                cmdServicios.Parameters.AddWithValue("@CitaID", selectedCitaID);
+                SqlDataAdapter daServicios = new SqlDataAdapter(cmdServicios);
+
+                try
+                {
+                    if (con.State != ConnectionState.Open) con.Open(); // Reutilizar conexión si está cerrada
+                    daServicios.Fill(dtCitaServicios);
+
+                    // Calcular el total de la cita
+                    SqlCommand cmdTotal = new SqlCommand("SELECT SUM(Cantidad * PrecioUnitario) FROM CitaServicios WHERE CitaID = @CitaID", con);
+                    cmdTotal.Parameters.AddWithValue("@CitaID", selectedCitaID);
+                    object resultTotal = cmdTotal.ExecuteScalar(); // Correcto: Llama ExecuteScalar en el SqlCommand
+
+                    if (resultTotal != null && resultTotal != DBNull.Value)
+                    {
+                        totalCita = Convert.ToDecimal(resultTotal);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al obtener los servicios de la cita para el PDF: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            // Crear el documento PDF
+            Document doc = new Document(PageSize.A4, 30f, 30f, 40f, 30f); // Márgenes
+
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    PdfWriter writer = PdfWriter.GetInstance(doc, ms);
+                    doc.Open();
+
+                    // Cultura para formato de moneda (Soles Peruanos)
+                    CultureInfo culturePE = new CultureInfo("es-PE");
+
+                    // ====================================================================
+                    // 1. ENCABEZADO DEL DOCUMENTO (Logo, Info de la Clínica, Título)
+                    // ====================================================================
+
+                    PdfPTable headerTable = new PdfPTable(2);
+                    headerTable.WidthPercentage = 100;
+                    headerTable.SetWidths(new float[] { 1f, 3f });
+                    headerTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                    headerTable.SpacingAfter = 20f;
+
+                    string logoPath = Server.MapPath("~/Assets/Images/logo.png"); // <--- ¡VERIFICA ESTA RUTA!
+                    if (File.Exists(logoPath))
+                    {
+                        iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(logoPath);
+                        logo.ScaleToFit(70f, 70f);
+                        PdfPCell logoCell = new PdfPCell(logo);
+                        logoCell.Border = PdfPCell.NO_BORDER;
+                        logoCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                        logoCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                        logoCell.Padding = 5;
+                        headerTable.AddCell(logoCell);
+                    }
+                    else
+                    {
+                        headerTable.AddCell(new PdfPCell(new Phrase("Logo no encontrado", FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 8, BaseColor.RED))) { Border = PdfPCell.NO_BORDER });
+                    }
+
+                    PdfPCell companyInfoCell = new PdfPCell();
+                    companyInfoCell.Border = PdfPCell.NO_BORDER;
+                    companyInfoCell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                    companyInfoCell.VerticalAlignment = Element.ALIGN_TOP;
+                    companyInfoCell.Padding = 5;
+
+                    Font fontCompanyName = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18, new BaseColor(54, 80, 106));
+                    Font fontCompanyDetails = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+
+                    companyInfoCell.AddElement(new Paragraph("VETWEB", fontCompanyName) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Villa el Salvador, Lima, Perú", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Teléfono: +51 907377938", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Email: info@vetweb.com", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+
+                    headerTable.AddCell(companyInfoCell);
+                    doc.Add(headerTable);
+
+                    // Título del Reporte
+                    Font reportTitleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20, BaseColor.DARK_GRAY);
+                    Paragraph reportTitle = new Paragraph("REPORTE COMPLETO DE CITA", reportTitleFont);
+                    reportTitle.Alignment = Element.ALIGN_CENTER;
+                    reportTitle.SpacingAfter = 15f;
+                    doc.Add(reportTitle);
+
+                    // Información del Documento (Folio, Fecha de Generación)
+                    PdfPTable docDetailsTable = new PdfPTable(2);
+                    docDetailsTable.WidthPercentage = 100;
+                    docDetailsTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                    docDetailsTable.SetWidths(new float[] { 1f, 1f });
+                    docDetailsTable.SpacingAfter = 10f;
+
+                    Font fontDocDetails = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.DARK_GRAY);
+
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"FOLIO: {new Random().Next(100000, 999999)}", fontDocDetails)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"Fecha de Generación: {DateTime.Now:dd/MM/yyyy HH:mm:ss}", fontDocDetails)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_RIGHT });
+
+                    // Mostrar la cita ID como parte del filtro/contexto del reporte
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"Cita Reportada: Cita #{selectedCitaID}", fontDocDetails)) { Colspan = 2, Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
+
+                    doc.Add(docDetailsTable);
+
+                    // ====================================================================
+                    // 2. DETALLES DE LA CITA SELECCIONADA (Formato más simple, no tabla de 2 columnas)
+                    // ====================================================================
+                    // Agregamos la información de la cita como un párrafo o bloques de texto
+                    Paragraph citaInfoParagraph = new Paragraph();
+                    citaInfoParagraph.SetLeading(0f, 1.2f); // Espaciado entre líneas
+                    citaInfoParagraph.SpacingAfter = 15f;
+
+                    Font fontCitaDetailsLabel = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.BLACK);
+                    Font fontCitaDetailsValue = FontFactory.GetFont(FontFactory.HELVETICA, 10, BaseColor.DARK_GRAY);
+
+                    citaInfoParagraph.Add(new Chunk("Fecha de Cita: ", fontCitaDetailsLabel));
+                    citaInfoParagraph.Add(new Chunk(fechaCita + "\n", fontCitaDetailsValue));
+
+                    citaInfoParagraph.Add(new Chunk("Cliente: ", fontCitaDetailsLabel));
+                    citaInfoParagraph.Add(new Chunk(nombreCliente + "\n", fontCitaDetailsValue));
+
+                    citaInfoParagraph.Add(new Chunk("Mascota: ", fontCitaDetailsLabel));
+                    citaInfoParagraph.Add(new Chunk(nombreMascota + "\n", fontCitaDetailsValue));
+
+                    citaInfoParagraph.Add(new Chunk("Empleado Asignado: ", fontCitaDetailsLabel));
+                    citaInfoParagraph.Add(new Chunk(nombreEmpleado + "\n", fontCitaDetailsValue));
+
+                    doc.Add(citaInfoParagraph);
+
+
+                    // ====================================================================
+                    // 3. TABLA DE SERVICIOS DE LA CITA (Con estilo de Reporte de Clientes)
+                    // ====================================================================
+
+                    if (dtCitaServicios.Rows.Count == 0)
+                    {
+                        Paragraph noServices = new Paragraph("No se registraron servicios para esta cita.", fontCompanyDetails);
+                        noServices.Alignment = Element.ALIGN_CENTER;
+                        doc.Add(noServices);
+                    }
+                    else
+                    {
+                        PdfPTable pdfTable = new PdfPTable(dtCitaServicios.Columns.Count);
+                        pdfTable.WidthPercentage = 100;
+                        pdfTable.SpacingBefore = 10f;
+                        pdfTable.DefaultCell.Padding = 5;
+                        pdfTable.HeaderRows = 1;
+
+                        // Las columnas son: NombreServicio, Cantidad, PrecioUnitario, Subtotal
+                        float[] widths = new float[] { 3f, 1f, 1.5f, 1.5f };
+                        if (dtCitaServicios.Columns.Count == widths.Length)
+                        {
+                            pdfTable.SetWidths(widths);
+                        }
+                        else
+                        {
+                            pdfTable.SetWidths(Enumerable.Repeat(1f, dtCitaServicios.Columns.Count).ToArray());
+                        }
+
+                        // Añadir encabezados de columna
+                        Font fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.WHITE);
+                        BaseColor headerColor = new BaseColor(54, 80, 106);
+                        string[] headers = { "Servicio", "Cantidad", "P. Unitario", "Subtotal" };
+
+                        for (int i = 0; i < dtCitaServicios.Columns.Count; i++)
+                        {
+                            PdfPCell headerCell = new PdfPCell(new Phrase(headers[i], fontHeader));
+                            headerCell.BackgroundColor = headerColor;
+                            headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                            headerCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                            headerCell.Padding = 7;
+                            headerCell.BorderColor = BaseColor.LIGHT_GRAY;
+                            pdfTable.AddCell(headerCell);
+                        }
+
+                        // Añadir filas de datos
+                        Font fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+                        foreach (DataRow row in dtCitaServicios.Rows)
+                        {
+                            PdfPCell cellServicio = new PdfPCell(new Phrase(row["NombreServicio"].ToString(), fontCell));
+                            cellServicio.HorizontalAlignment = Element.ALIGN_LEFT;
+
+                            PdfPCell cellCantidad = new PdfPCell(new Phrase(row["Cantidad"].ToString(), fontCell));
+                            cellCantidad.HorizontalAlignment = Element.ALIGN_CENTER;
+
+                            PdfPCell cellPrecioUnitario = new PdfPCell(new Phrase(Convert.ToDecimal(row["PrecioUnitario"]).ToString("C", culturePE), fontCell));
+                            cellPrecioUnitario.HorizontalAlignment = Element.ALIGN_RIGHT;
+
+                            PdfPCell cellSubtotal = new PdfPCell(new Phrase(Convert.ToDecimal(row["Subtotal"]).ToString("C", culturePE), fontCell));
+                            cellSubtotal.HorizontalAlignment = Element.ALIGN_RIGHT;
+
+                            // Alternar color de fondo para filas para mejor legibilidad
+                            if (dtCitaServicios.Rows.IndexOf(row) % 2 == 0)
+                            {
+                                BaseColor lightGray = new BaseColor(245, 245, 245); // Gris muy claro para alternancia
+                                cellServicio.BackgroundColor = lightGray;
+                                cellCantidad.BackgroundColor = lightGray;
+                                cellPrecioUnitario.BackgroundColor = lightGray;
+                                cellSubtotal.BackgroundColor = lightGray;
+                            }
+
+                            cellServicio.Padding = 5;
+                            cellCantidad.Padding = 5;
+                            cellPrecioUnitario.Padding = 5;
+                            cellSubtotal.Padding = 5;
+
+                            cellServicio.BorderColor = BaseColor.LIGHT_GRAY;
+                            cellCantidad.BorderColor = BaseColor.LIGHT_GRAY;
+                            cellPrecioUnitario.BorderColor = BaseColor.LIGHT_GRAY;
+                            cellSubtotal.BorderColor = BaseColor.LIGHT_GRAY;
+
+                            pdfTable.AddCell(cellServicio);
+                            pdfTable.AddCell(cellCantidad);
+                            pdfTable.AddCell(cellPrecioUnitario);
+                            pdfTable.AddCell(cellSubtotal);
+                        }
+
+                        doc.Add(pdfTable);
+
+                        // Mostrar el total de la cita
+                        PdfPTable totalTable = new PdfPTable(2);
+                        totalTable.WidthPercentage = 100;
+                        totalTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                        totalTable.SetWidths(new float[] { 4f, 2f });
+                        totalTable.SpacingBefore = 10f;
+
+                        Font fontTotalLabel = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
+                        Font fontTotalValue = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12, new BaseColor(54, 80, 106));
+
+                        PdfPCell totalLabelCell = new PdfPCell(new Phrase("TOTAL DE LA CITA:", fontTotalLabel));
+                        totalLabelCell.Border = PdfPCell.NO_BORDER;
+                        totalLabelCell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        totalLabelCell.Padding = 5;
+                        totalTable.AddCell(totalLabelCell);
+
+                        PdfPCell totalValueCell = new PdfPCell(new Phrase(totalCita.ToString("C", culturePE), fontTotalValue));
+                        totalValueCell.Border = PdfPCell.NO_BORDER;
+                        totalValueCell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        totalValueCell.Padding = 5;
+                        totalTable.AddCell(totalValueCell);
+
+                        doc.Add(totalTable);
+                    }
+
+                    // ====================================================================
+                    // 4. PIE DE PÁGINA DEL DOCUMENTO
+                    // ====================================================================
+                    Font fontFooter = FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 9, BaseColor.GRAY);
+                    Paragraph footerNote = new Paragraph($"Este es un reporte de servicios generado para la cita #{selectedCitaID} de VetWeb.", fontFooter);
+                    footerNote.Alignment = Element.ALIGN_CENTER;
+                    footerNote.SpacingBefore = 20f;
+                    doc.Add(footerNote);
+
+                    Paragraph thankYouNote = new Paragraph("Generado por VetWeb - Tu solución para la gestión veterinaria.", FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.LIGHT_GRAY));
+                    thankYouNote.Alignment = Element.ALIGN_CENTER;
+                    doc.Add(thankYouNote);
+
+                    doc.Close();
+
+                    // Enviar el PDF al navegador
+                    Response.ContentType = "application/pdf";
+                    Response.AddHeader("content-disposition", $"attachment;filename=ReporteServiciosCita_#{selectedCitaID}.pdf");
+                    Response.Buffer = true;
+                    Response.Clear();
+                    Response.BinaryWrite(ms.ToArray());
+                    Response.End();
+                }
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el PDF de servicios de la cita: " + ex.Message, false);
+            }
+            finally
+            {
+                if (doc.IsOpen())
+                {
+                    doc.Close();
+                }
+            }
+        }
+        
     }
 }

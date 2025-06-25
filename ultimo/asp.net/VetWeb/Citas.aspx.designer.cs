@@ -51,6 +51,15 @@ namespace VetWeb
         protected global::System.Web.UI.WebControls.LinkButton btnLimpiarBusquedaCita;
 
         /// <summary>
+        /// Control btnImprimirPdf.
+        /// </summary>
+        /// <remarks>
+        /// Campo generado automáticamente.
+        /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnImprimirPdf;
+
+        /// <summary>
         /// Control gvCitas.
         /// </summary>
         /// <remarks>

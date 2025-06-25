@@ -5,6 +5,10 @@ using System.Data.SqlClient;
 using System.Text.RegularExpressions; // Necesario para expresiones regulares
 using System.Web.UI; // Necesario para ScriptManager
 using System.Web.UI.WebControls;
+using iTextSharp.text; // Add this for iTextSharp
+using iTextSharp.text.pdf; // Add this for iTextSharp
+using System.IO; // Add this for MemoryStream and File.Exists
+using System.Linq; // Add this for Enumerable.Repeat
 
 namespace VetWeb
 {
@@ -27,7 +31,7 @@ namespace VetWeb
                 {
                     // Asegurarse de que ddlMascotas tenga la opción por defecto si no hay cliente seleccionado
                     ddlMascotas.Items.Clear();
-                    ddlMascotas.Items.Insert(0, new ListItem("Seleccione una Mascota", ""));
+                    ddlMascotas.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una Mascota", ""));
                 }
                 CargarEmpleados();
                 CargarCitas();
@@ -53,7 +57,7 @@ namespace VetWeb
                 ddlClientes.DataTextField = "NombreCompleto";
                 ddlClientes.DataValueField = "ClienteID";
                 ddlClientes.DataBind();
-                ddlClientes.Items.Insert(0, new ListItem("Seleccione un Cliente", ""));
+                ddlClientes.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione un Cliente", ""));
             }
         }
 
@@ -69,7 +73,7 @@ namespace VetWeb
             else
             {
                 ddlMascotas.Items.Clear();
-                ddlMascotas.Items.Insert(0, new ListItem("Seleccione una Mascota", ""));
+                ddlMascotas.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una Mascota", ""));
             }
             // Asegurarse de que el modal permanezca abierto si se activa desde allí
             ScriptManager.RegisterStartupScript(this, this.GetType(), "ShowCitaModalOnDdlChange", "showCitaModal();", true);
@@ -94,7 +98,7 @@ namespace VetWeb
                 ddlMascotas.DataTextField = "Nombre";
                 ddlMascotas.DataValueField = "MascotaID";
                 ddlMascotas.DataBind();
-                ddlMascotas.Items.Insert(0, new ListItem("Seleccione una Mascota", ""));
+                ddlMascotas.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una Mascota", ""));
             }
         }
 
@@ -113,7 +117,7 @@ namespace VetWeb
                 ddlEmpleados.DataTextField = "NombreCompleto";
                 ddlEmpleados.DataValueField = "EmpleadoID";
                 ddlEmpleados.DataBind();
-                ddlEmpleados.Items.Insert(0, new ListItem("Seleccione un Empleado", ""));
+                ddlEmpleados.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione un Empleado", ""));
             }
         }
 
@@ -419,7 +423,7 @@ namespace VetWeb
             ddlClientes.ClearSelection();
             if (ddlClientes.Items.Count > 0) ddlClientes.Items.FindByValue("").Selected = true;
             ddlMascotas.Items.Clear(); // Limpiar y resetear mascotas
-            ddlMascotas.Items.Insert(0, new ListItem("Seleccione una Mascota", ""));
+            ddlMascotas.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una Mascota", ""));
             ddlEmpleados.ClearSelection();
             if (ddlEmpleados.Items.Count > 0) ddlEmpleados.Items.FindByValue("").Selected = true;
             hfCitaID.Value = "";
@@ -512,6 +516,240 @@ namespace VetWeb
         {
             txtBuscarCita.Text = ""; // Limpiar el textbox de búsqueda
             CargarCitas(); // Recargar todas las citas sin filtro
+        }
+
+        protected void btnImprimirPdf_Click(object sender, EventArgs e)
+        {
+            DataTable dtCitas = new DataTable();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de las citas (aplicando el filtro de búsqueda actual si lo hay)
+                string query = @"
+                    SELECT
+                        C.Fecha,
+                        Cl.PrimerNombre + ' ' + Cl.ApellidoPaterno AS NombreCliente,
+                        M.Nombre AS NombreMascota,
+                        E.PrimerNombre + ' ' + E.ApellidoPaterno AS NombreEmpleado
+                    FROM Citas C
+                    INNER JOIN Mascotas M ON C.MascotaID = M.MascotaID
+                    INNER JOIN Clientes Cl ON M.ClienteID = Cl.ClienteID
+                    INNER JOIN Empleados E ON C.EmpleadoID = E.EmpleadoID";
+
+                // Aplicar el filtro de búsqueda si el campo txtBuscarCita no está vacío
+                if (!string.IsNullOrEmpty(txtBuscarCita.Text.Trim()))
+                {
+                    query += " WHERE Cl.PrimerNombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR Cl.ApellidoPaterno LIKE '%' + @SearchTerm + '%' " +
+                             "OR M.Nombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR E.PrimerNombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR E.ApellidoPaterno LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY C.Fecha DESC"; // Ordenar las citas por fecha
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarCita.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarCita.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtCitas);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos de las citas para el PDF: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtCitas.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de citas para generar el PDF con el filtro actual.", false);
+                return;
+            }
+
+            // Crear el documento PDF
+            Document doc = new Document(PageSize.A4, 30f, 30f, 40f, 30f); // Márgenes
+
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    PdfWriter writer = PdfWriter.GetInstance(doc, ms);
+                    doc.Open();
+
+                    // ====================================================================
+                    // 1. ENCABEZADO DEL DOCUMENTO (Logo, Info de la Clínica, Título)
+                    // ====================================================================
+
+                    PdfPTable headerTable = new PdfPTable(2);
+                    headerTable.WidthPercentage = 100;
+                    headerTable.SetWidths(new float[] { 1f, 3f });
+                    headerTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                    headerTable.SpacingAfter = 20f;
+
+                    string logoPath = Server.MapPath("~/Assets/Images/logo.png"); // <--- ¡VERIFICA ESTA RUTA!
+                    if (File.Exists(logoPath))
+                    {
+                        iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(logoPath);
+                        logo.ScaleToFit(70f, 70f);
+                        PdfPCell logoCell = new PdfPCell(logo);
+                        logoCell.Border = PdfPCell.NO_BORDER;
+                        logoCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                        logoCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                        logoCell.Padding = 5;
+                        headerTable.AddCell(logoCell);
+                    }
+                    else
+                    {
+                        headerTable.AddCell(new PdfPCell(new Phrase("Logo no encontrado", FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 8, BaseColor.RED))) { Border = PdfPCell.NO_BORDER });
+                    }
+
+                    PdfPCell companyInfoCell = new PdfPCell();
+                    companyInfoCell.Border = PdfPCell.NO_BORDER;
+                    companyInfoCell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                    companyInfoCell.VerticalAlignment = Element.ALIGN_TOP;
+                    companyInfoCell.Padding = 5;
+
+                    Font fontCompanyName = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18, new BaseColor(54, 80, 106));
+                    Font fontCompanyDetails = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+
+                    companyInfoCell.AddElement(new Paragraph("VETWEB", fontCompanyName) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Villa el Salvador, Lima, Perú", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Teléfono: +51 907377938", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Email: info@vetweb.com", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+
+                    headerTable.AddCell(companyInfoCell);
+                    doc.Add(headerTable);
+
+                    // Título del Reporte
+                    Font reportTitleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20, BaseColor.DARK_GRAY);
+                    Paragraph reportTitle = new Paragraph("REPORTE DE CITAS", reportTitleFont);
+                    reportTitle.Alignment = Element.ALIGN_CENTER;
+                    reportTitle.SpacingAfter = 15f;
+                    doc.Add(reportTitle);
+
+                    // Información del Documento (Folio, Fecha de Generación, Filtro Aplicado)
+                    PdfPTable docDetailsTable = new PdfPTable(2);
+                    docDetailsTable.WidthPercentage = 100;
+                    docDetailsTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                    docDetailsTable.SetWidths(new float[] { 1f, 1f });
+                    docDetailsTable.SpacingAfter = 10f;
+
+                    Font fontDocDetails = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.DARK_GRAY);
+
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"FOLIO: {new Random().Next(100000, 999999)}", fontDocDetails)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"Fecha de Generación: {DateTime.Now:dd/MM/yyyy HH:mm:ss}", fontDocDetails)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_RIGHT });
+
+                    string filtroAplicado = string.IsNullOrEmpty(txtBuscarCita.Text.Trim()) ? "Ninguno" : txtBuscarCita.Text.Trim();
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"Filtro aplicado: \"{filtroAplicado}\"", fontDocDetails)) { Colspan = 2, Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
+
+                    doc.Add(docDetailsTable);
+
+                    // ====================================================================
+                    // 2. TABLA DE DATOS DE CITAS
+                    // ====================================================================
+
+                    PdfPTable pdfTable = new PdfPTable(dtCitas.Columns.Count);
+                    pdfTable.WidthPercentage = 100;
+                    pdfTable.SpacingBefore = 10f;
+                    pdfTable.DefaultCell.Padding = 5;
+                    pdfTable.HeaderRows = 1;
+
+                    // Las columnas son: Fecha, NombreCliente, NombreMascota, NombreEmpleado
+                    float[] widths = new float[] { 1.5f, 2.5f, 2f, 2.5f };
+                    if (dtCitas.Columns.Count == widths.Length)
+                    {
+                        pdfTable.SetWidths(widths);
+                    }
+                    else
+                    {
+                        pdfTable.SetWidths(Enumerable.Repeat(1f, dtCitas.Columns.Count).ToArray());
+                    }
+
+                    // Añadir encabezados de columna
+                    Font fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.WHITE);
+                    BaseColor headerColor = new BaseColor(54, 80, 106);
+                    string[] headers = { "Fecha", "Cliente", "Mascota", "Empleado" };
+
+                    for (int i = 0; i < dtCitas.Columns.Count; i++)
+                    {
+                        PdfPCell headerCell = new PdfPCell(new Phrase(headers[i], fontHeader));
+                        headerCell.BackgroundColor = headerColor;
+                        headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                        headerCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                        headerCell.Padding = 7;
+                        headerCell.BorderColor = BaseColor.LIGHT_GRAY;
+                        pdfTable.AddCell(headerCell);
+                    }
+
+                    // Añadir filas de datos
+                    Font fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+                    foreach (DataRow row in dtCitas.Rows)
+                    {
+                        for (int i = 0; i < dtCitas.Columns.Count; i++)
+                        {
+                            string cellText = row[i].ToString();
+                            // Formatear la fecha si es la columna de Fecha
+                            if (dtCitas.Columns[i].ColumnName == "Fecha" && DateTime.TryParse(cellText, out DateTime dateValue))
+                            {
+                                cellText = dateValue.ToString("dd/MM/yyyy HH:mm"); // Formato deseado para la fecha y hora
+                            }
+
+                            PdfPCell dataCell = new PdfPCell(new Phrase(cellText, fontCell));
+                            dataCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                            dataCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                            dataCell.Padding = 5;
+                            if (dtCitas.Rows.IndexOf(row) % 2 == 0)
+                            {
+                                dataCell.BackgroundColor = new BaseColor(245, 245, 245);
+                            }
+                            dataCell.BorderColor = BaseColor.LIGHT_GRAY;
+                            pdfTable.AddCell(dataCell);
+                        }
+                    }
+
+                    doc.Add(pdfTable);
+
+                    // ====================================================================
+                    // 3. PIE DE PÁGINA DEL DOCUMENTO (Notas, etc.)
+                    // ====================================================================
+                    Font fontFooter = FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 9, BaseColor.GRAY);
+                    Paragraph footerNote = new Paragraph("Este es un reporte interno de citas de VetWeb.", fontFooter);
+                    footerNote.Alignment = Element.ALIGN_CENTER;
+                    footerNote.SpacingBefore = 20f;
+                    doc.Add(footerNote);
+
+                    Paragraph thankYouNote = new Paragraph("Generado por VetWeb - Tu solución para la gestión veterinaria.", FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.LIGHT_GRAY));
+                    thankYouNote.Alignment = Element.ALIGN_CENTER;
+                    doc.Add(thankYouNote);
+
+                    doc.Close();
+
+                    // Enviar el PDF al navegador
+                    Response.ContentType = "application/pdf";
+                    Response.AddHeader("content-disposition", "attachment;filename=ReporteCitas.pdf");
+                    Response.Buffer = true;
+                    Response.Clear();
+                    Response.BinaryWrite(ms.ToArray());
+                    Response.End();
+                }
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el PDF de citas: " + ex.Message, false);
+            }
+            finally
+            {
+                if (doc.IsOpen())
+                {
+                    doc.Close();
+                }
+            }
         }
     }
 }

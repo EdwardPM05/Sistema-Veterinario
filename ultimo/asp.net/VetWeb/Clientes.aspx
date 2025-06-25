@@ -606,8 +606,6 @@
                     </svg>
                     Agregar Nuevo Cliente
                 </button>
-
-                <%-- **NUEVO BOTÓN PARA IMPRIMIR PDF (CON ESTILO CUSTOM)** --%>
                 <asp:LinkButton ID="btnImprimirPdf" runat="server" CssClass="btn btn-custom" OnClick="btnImprimirPdf_Click">
                     <i class="bi bi-file-earmark-pdf me-2"></i> Reporte PDF
                 </asp:LinkButton>

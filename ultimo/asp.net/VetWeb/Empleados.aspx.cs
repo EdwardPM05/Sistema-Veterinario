@@ -1,9 +1,13 @@
-﻿using System;
+﻿using iTextSharp.text;     // Necesario para la clase Document
+using iTextSharp.text.pdf; // Necesario para PdfWriter, PdfPTable, etc.
+using System;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text.RegularExpressions; // Necesario para expresiones regulares
-using System.Web.UI; // Necesario para ScriptManager
+using System.IO;          // Necesario para MemoryStream
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Web.UI;
 using System.Web.UI.WebControls;
 
 namespace VetWeb
@@ -47,7 +51,7 @@ namespace VetWeb
                 // Solo inserta la opción "Seleccione un rol" si no está ya presente
                 if (ddlRoles.Items.FindByValue("") == null) // Buscar por el valor vacío
                 {
-                    ddlRoles.Items.Insert(0, new ListItem("Seleccione un rol", "")); // Opción por defecto
+                    ddlRoles.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione un rol", "")); // Opción por defecto
                 }
                 // Asegurarse de que la opción por defecto esté seleccionada al inicio
                 ddlRoles.Items.FindByValue("").Selected = true;
@@ -308,7 +312,7 @@ namespace VetWeb
                 {
                     // Importante: No llamar CargarRoles() aquí de nuevo, ya se cargó en Page_Load
                     // Solo intentar seleccionar el valor.
-                    ListItem rolItem = ddlRoles.Items.FindByValue(rolID.ToString());
+                    System.Web.UI.WebControls.ListItem rolItem = ddlRoles.Items.FindByValue(rolID.ToString());
                     if (rolItem != null)
                     {
                         ddlRoles.SelectedValue = rolItem.Value;
@@ -420,7 +424,7 @@ namespace VetWeb
             else
             {
                 // En un caso extremo, si no existe, re-insertarlo y seleccionarlo.
-                ddlRoles.Items.Insert(0, new ListItem("Seleccione un rol", ""));
+                ddlRoles.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione un rol", ""));
                 ddlRoles.Items.FindByValue("").Selected = true;
             }
 
@@ -490,6 +494,245 @@ namespace VetWeb
             }
 
             return true;
+        }
+
+        protected void btnImprimirPdf_Click(object sender, EventArgs e)
+        {
+            DataTable dtEmpleados = new DataTable();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de los empleados (aplicando el filtro de búsqueda actual si lo hay)
+                string query = @"
+                    SELECT 
+                        E.PrimerNombre, 
+                        E.ApellidoPaterno, 
+                        E.ApellidoMaterno, 
+                        E.DNI, 
+                        E.Telefono, 
+                        E.Correo, 
+                        R.NombreRol 
+                    FROM Empleados E
+                    INNER JOIN Roles R ON E.RolID = R.RolID";
+
+                if (!string.IsNullOrEmpty(txtBuscarNombreEmpleado.Text.Trim()))
+                {
+                    query += " WHERE E.PrimerNombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR E.ApellidoPaterno LIKE '%' + @SearchTerm + '%' " +
+                             "OR E.ApellidoMaterno LIKE '%' + @SearchTerm + '%' " +
+                             "OR E.DNI LIKE '%' + @SearchTerm + '%' " +
+                             "OR R.NombreRol LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY E.PrimerNombre, E.ApellidoPaterno";
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarNombreEmpleado.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarNombreEmpleado.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtEmpleados);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el PDF: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtEmpleados.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de empleados para generar el PDF con el filtro actual.", false);
+                return;
+            }
+
+            // Crear el documento PDF
+            Document doc = new Document(PageSize.A4, 30f, 30f, 40f, 30f); // Márgenes (izquierda, derecha, arriba, abajo) ajustados
+
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    PdfWriter writer = PdfWriter.GetInstance(doc, ms);
+                    doc.Open();
+
+                    // ====================================================================
+                    // 1. ENCABEZADO DEL DOCUMENTO (Logo, Info de la Clínica, Título)
+                    // ====================================================================
+
+                    // Tabla principal para el encabezado (Logo a la izquierda, info de la empresa a la derecha)
+                    PdfPTable headerTable = new PdfPTable(2);
+                    headerTable.WidthPercentage = 100;
+                    headerTable.SetWidths(new float[] { 1f, 3f }); // Ancho para logo y ancho para info de la empresa
+                    headerTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                    headerTable.SpacingAfter = 20f;
+
+                    // Celda 1: Logo de la Patita
+                    // Asegúrate de que la ruta de la imagen sea correcta y la imagen exista
+                    string logoPath = Server.MapPath("~/Assets/Images/logo.png"); // <--- ¡AJUSTA ESTA RUTA SI ES DIFERENTE!
+                    if (File.Exists(logoPath))
+                    {
+                        iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(logoPath);
+                        logo.ScaleToFit(70f, 70f); // Ajustar tamaño del logo
+                        PdfPCell logoCell = new PdfPCell(logo);
+                        logoCell.Border = PdfPCell.NO_BORDER;
+                        logoCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                        logoCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                        logoCell.Padding = 5;
+                        headerTable.AddCell(logoCell);
+                    }
+                    else
+                    {
+                        // Si el logo no se encuentra, añadir una celda vacía o un placeholder
+                        // Considera loguear este error también
+                        headerTable.AddCell(new PdfPCell(new Phrase("Logo no encontrado", FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 8, BaseColor.RED))) { Border = PdfPCell.NO_BORDER });
+                    }
+
+                    // Celda 2: Información de la Empresa (VetWeb)
+                    PdfPCell companyInfoCell = new PdfPCell();
+                    companyInfoCell.Border = PdfPCell.NO_BORDER;
+                    companyInfoCell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                    companyInfoCell.VerticalAlignment = Element.ALIGN_TOP;
+                    companyInfoCell.Padding = 5;
+
+                    Font fontCompanyName = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18, new BaseColor(54, 80, 106)); // Color similar al encabezado de tu GridView
+                    Font fontCompanyDetails = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+
+                    companyInfoCell.AddElement(new Paragraph("VETWEB", fontCompanyName) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Villa el Salvador, Lima, Perú", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT }); //
+                    companyInfoCell.AddElement(new Paragraph("Teléfono: +51 907377938", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+                    companyInfoCell.AddElement(new Paragraph("Email: info@vetweb.com", fontCompanyDetails) { Alignment = Element.ALIGN_RIGHT });
+
+                    headerTable.AddCell(companyInfoCell);
+                    doc.Add(headerTable);
+
+                    // Título del Reporte
+                    Font reportTitleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20, BaseColor.DARK_GRAY);
+                    Paragraph reportTitle = new Paragraph("REPORTE DE EMPLEADOS", reportTitleFont);
+                    reportTitle.Alignment = Element.ALIGN_CENTER;
+                    reportTitle.SpacingAfter = 15f;
+                    doc.Add(reportTitle);
+
+                    // Información del Documento (Folio, Fecha de Generación, Filtro Aplicado)
+                    PdfPTable docDetailsTable = new PdfPTable(2);
+                    docDetailsTable.WidthPercentage = 100;
+                    docDetailsTable.DefaultCell.Border = PdfPCell.NO_BORDER;
+                    docDetailsTable.SetWidths(new float[] { 1f, 1f });
+                    docDetailsTable.SpacingAfter = 10f;
+
+                    Font fontDocDetails = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.DARK_GRAY);
+
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"FOLIO: {new Random().Next(100000, 999999)}", fontDocDetails)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"Fecha de Generación: {DateTime.Now:dd/MM/yyyy HH:mm:ss}", fontDocDetails)) { Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_RIGHT });
+
+                    string filtroAplicado = string.IsNullOrEmpty(txtBuscarNombreEmpleado.Text.Trim()) ? "Ninguno" : txtBuscarNombreEmpleado.Text.Trim();
+                    docDetailsTable.AddCell(new PdfPCell(new Phrase($"Filtro aplicado: \"{filtroAplicado}\"", fontDocDetails)) { Colspan = 2, Border = PdfPCell.NO_BORDER, HorizontalAlignment = Element.ALIGN_LEFT });
+
+                    doc.Add(docDetailsTable);
+
+                    // ====================================================================
+                    // 2. TABLA DE DATOS DE EMPLEADOS
+                    // ====================================================================
+
+                    // Crear la tabla PDF
+                    PdfPTable pdfTable = new PdfPTable(dtEmpleados.Columns.Count);
+                    pdfTable.WidthPercentage = 100; // Ocupar el 100% del ancho disponible
+                    pdfTable.SpacingBefore = 10f; // Espacio antes de la tabla
+                    pdfTable.DefaultCell.Padding = 5; // Padding de las celdas
+                    pdfTable.HeaderRows = 1; // Para que el encabezado se repita en cada página
+
+                    // Configurar anchos de columna (ajusta estos valores según tus datos reales para que no se superpongan)
+                    // Las columnas son: PrimerNombre, ApellidoPaterno, ApellidoMaterno, DNI, Telefono, Correo, NombreRol
+                    float[] widths = new float[] { 1.3f, 1.3f, 1.3f, 0.9f, 1.1f, 2f, 1.5f }; // Anchos reajustados para mejor legibilidad
+                    if (dtEmpleados.Columns.Count == widths.Length)
+                    {
+                        pdfTable.SetWidths(widths);
+                    }
+                    else
+                    {
+                        // Fallback si el número de columnas no coincide (distribuye equitativamente)
+                        pdfTable.SetWidths(Enumerable.Repeat(1f, dtEmpleados.Columns.Count).ToArray());
+                    }
+
+                    // Añadir encabezados de columna
+                    Font fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.WHITE);
+                    BaseColor headerColor = new BaseColor(54, 80, 106); // Un azul/gris oscuro, similar al de tu GridView
+                    string[] headers = { "Nombre", "A. Paterno", "A. Materno", "DNI", "Teléfono", "Correo", "Rol" }; // Nombres amigables para el encabezado
+
+                    for (int i = 0; i < dtEmpleados.Columns.Count; i++)
+                    {
+                        PdfPCell headerCell = new PdfPCell(new Phrase(headers[i], fontHeader));
+                        headerCell.BackgroundColor = headerColor;
+                        headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                        headerCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                        headerCell.Padding = 7; // Más padding para encabezados
+                        headerCell.BorderColor = BaseColor.LIGHT_GRAY; // Bordes sutiles
+                        pdfTable.AddCell(headerCell);
+                    }
+
+                    // Añadir filas de datos
+                    Font fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+                    foreach (DataRow row in dtEmpleados.Rows)
+                    {
+                        for (int i = 0; i < dtEmpleados.Columns.Count; i++)
+                        {
+                            PdfPCell dataCell = new PdfPCell(new Phrase(row[i].ToString(), fontCell));
+                            dataCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                            dataCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                            dataCell.Padding = 5;
+                            // Alternar color de fondo para filas para mejor legibilidad
+                            if (dtEmpleados.Rows.IndexOf(row) % 2 == 0)
+                            {
+                                dataCell.BackgroundColor = new BaseColor(245, 245, 245); // Gris muy claro para alternancia
+                            }
+                            dataCell.BorderColor = BaseColor.LIGHT_GRAY; // Bordes sutiles
+                            pdfTable.AddCell(dataCell);
+                        }
+                    }
+
+                    doc.Add(pdfTable);
+
+                    // ====================================================================
+                    // 3. PIE DE PÁGINA DEL DOCUMENTO (Notas, etc.)
+                    // ====================================================================
+                    Font fontFooter = FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 9, BaseColor.GRAY);
+                    Paragraph footerNote = new Paragraph("Este es un reporte interno de empleados de VetWeb.", fontFooter);
+                    footerNote.Alignment = Element.ALIGN_CENTER;
+                    footerNote.SpacingBefore = 20f;
+                    doc.Add(footerNote);
+
+                    Paragraph thankYouNote = new Paragraph("Generado por VetWeb - Tu solución para la gestión veterinaria.", FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.LIGHT_GRAY));
+                    thankYouNote.Alignment = Element.ALIGN_CENTER;
+                    doc.Add(thankYouNote);
+
+                    doc.Close();
+
+                    // Enviar el PDF al navegador
+                    Response.ContentType = "application/pdf";
+                    Response.AddHeader("content-disposition", "attachment;filename=ReporteEmpleados.pdf");
+                    Response.Buffer = true;
+                    Response.Clear();
+                    Response.BinaryWrite(ms.ToArray());
+                    Response.End();
+                }
+            }
+            catch (Exception ex)
+            {
+                // En un ambiente de producción, aquí deberías loguear el error y mostrar un mensaje más amigable
+                MostrarMensaje("Error al generar el PDF: " + ex.Message, false);
+            }
+            finally
+            {
+                // Asegurarse de que el documento se cierre incluso si hay un error en la generación
+                if (doc.IsOpen())
+                {
+                    doc.Close();
+                }
+            }
         }
 
         /// <summary>

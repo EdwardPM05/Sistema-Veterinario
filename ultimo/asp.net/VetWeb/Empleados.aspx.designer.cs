@@ -51,6 +51,15 @@ namespace VetWeb
         protected global::System.Web.UI.WebControls.LinkButton btnLimpiarBusquedaEmpleado;
 
         /// <summary>
+        /// Control btnImprimirPdfEmpleados.
+        /// </summary>
+        /// <remarks>
+        /// Campo generado automáticamente.
+        /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnImprimirPdfEmpleados;
+
+        /// <summary>
         /// Control gvEmpleados.
         /// </summary>
         /// <remarks>

@@ -648,8 +648,6 @@
 
         <!-- Main Content Area -->
         <div class="content" id="mainContent">
-            <h2 class="mb-4">Dashboard</h2>
-            <hr />
 
             <!-- Summary Cards -->
             <div class="row g-4 mb-5">
@@ -663,7 +661,7 @@
                             <h3 class="card-title">
                                 <asp:Label ID="lblTotalClientes" runat="server" Text="0"></asp:Label>
                             </h3>
-                            <p class="card-text text-muted">Total de clientes.</p>
+                            <p class="card-text text-muted">Numero de clientes.</p>
                         </div>
                     </div>
                 </div>
@@ -678,7 +676,7 @@
                             <h3 class="card-title">
                                 <asp:Label ID="lblTotalMascotas" runat="server" Text="0"></asp:Label>
                             </h3>
-                            <p class="card-text text-muted">Total de mascotas registradas.</p>
+                            <p class="card-text text-muted">Numero de mascotas.</p>
                         </div>
                     </div>
                 </div>
