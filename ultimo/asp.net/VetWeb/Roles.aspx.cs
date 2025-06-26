@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Text.RegularExpressions; // Necesario para expresiones regulares
 using System.Web.UI; // Necesario para ScriptManager
 using System.Web.UI.WebControls;
+using System.Text; // NECESARIO PARA StringBuilder
 
 namespace VetWeb
 {
@@ -374,10 +375,8 @@ namespace VetWeb
             ScriptManager.RegisterStartupScript(this, this.GetType(), "ScrollToMessageRol", "var modalBody = document.querySelector('#rolModal .modal-body'); if(modalBody) modalBody.scrollTop = 0;", true);
         }
 
-        /// <summary>
-        /// Maneja el evento de clic del botón de búsqueda.
-        /// Filtra la lista de roles basada en el término de búsqueda.
-        /// </summary>
+
+
         protected void btnBuscarRol_Click(object sender, EventArgs e)
         {
             CargarRoles(txtBuscarNombreRol.Text.Trim());
@@ -391,6 +390,111 @@ namespace VetWeb
         {
             txtBuscarNombreRol.Text = ""; // Limpiar el textbox de búsqueda
             CargarRoles(); // Recargar todos los roles sin filtro
+        }
+
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtRoles = new DataTable();
+            // Utiliza txtBuscarNombreRol para el filtro de búsqueda de roles
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarNombreRol.Text.Trim()) ? "Ninguno" : txtBuscarNombreRol.Text.Trim();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de los roles (aplicando el filtro de búsqueda actual si lo hay)
+                string query = "SELECT NombreRol FROM Roles";
+
+                if (!string.IsNullOrEmpty(txtBuscarNombreRol.Text.Trim()))
+                {
+                    query += " WHERE NombreRol LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY NombreRol"; // Ordenar para una visualización consistente
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarNombreRol.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarNombreRol.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtRoles);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtRoles.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de roles para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                // Configurar la respuesta para descargar un archivo Excel
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel"; // MIME type para Excel 97-2003
+                // Nombre del archivo Excel: ReporteRoles_FechaHoraActual.xls
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteRoles_" + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble()); // Para UTF-8 con BOM
+
+                // Usar StringBuilder para construir el contenido HTML de la tabla
+                StringBuilder sb = new StringBuilder();
+
+                // Cabecera HTML para Excel (opcional pero recomendable para una mejor compatibilidad)
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>Roles</x:Name>"); // Nombre de la hoja en Excel
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                // Colspan será 1 porque solo hay una columna de datos (NombreRol)
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='1' align='center'><b>REPORTE DE ROLES</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='1' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='1' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>");
+                sb.Append("<br>"); // Salto de línea para separar el encabezado de la tabla de datos
+
+                // Crear la tabla HTML para los datos de los roles
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Añadir fila de encabezados para la tabla de datos
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                sb.Append("<th>Nombre del Rol</th>"); // Solo un encabezado: Nombre del Rol
+                sb.Append("</tr>");
+
+                // Añadir filas de datos
+                foreach (DataRow row in dtRoles.Rows)
+                {
+                    sb.Append("<tr>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["NombreRol"].ToString()) + "</td>"); // Solo una columna de datos
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+
+
+                sb.Append("</body></html>");
+
+                // Escribir el contenido en el flujo de respuesta
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
+            }
         }
     }
 }

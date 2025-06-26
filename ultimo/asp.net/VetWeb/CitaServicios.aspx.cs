@@ -10,6 +10,7 @@ using iTextSharp.text; // Importa iTextSharp
 using iTextSharp.text.pdf; // Importa iTextSharp.pdf
 using System.IO; // Necesario para MemoryStream
 using System.Linq; // Necesario para Enumerable.Repeat
+using System.Text;
 
 namespace VetWeb
 {
@@ -951,6 +952,146 @@ namespace VetWeb
                 }
             }
         }
-        
+
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            // Check if a Cita (appointment) is selected
+            if (string.IsNullOrEmpty(hfSelectedCitaID.Value))
+            {
+                MostrarMensaje("Por favor, seleccione una cita para exportar sus servicios a Excel.", false);
+                return;
+            }
+
+            int selectedCitaID;
+            if (!int.TryParse(hfSelectedCitaID.Value, out selectedCitaID))
+            {
+                MostrarMensaje("Error: ID de cita no válido para exportar a Excel.", false);
+                return;
+            }
+
+            DataTable dtCitaServicios = new DataTable();
+            string infoCitaSeleccionada = ddlCitas.SelectedItem.Text; // Get full info from dropdown
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                string query = @"
+                    SELECT
+                        S.NombreServicio AS 'Servicio',
+                        CS.Cantidad AS 'Cantidad',
+                        CS.PrecioUnitario AS 'Precio Unitario',
+                        (CS.Cantidad * CS.PrecioUnitario) AS 'Subtotal'
+                    FROM CitaServicios CS
+                    INNER JOIN Servicios S ON CS.ServicioID = S.ServicioID
+                    WHERE CS.CitaID = @CitaID
+                    ORDER BY S.NombreServicio";
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@CitaID", selectedCitaID);
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtCitaServicios);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos de servicios de la cita para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtCitaServicios.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay servicios asociados a la cita seleccionada para generar el Excel.", false);
+                return;
+            }
+
+            try
+            {
+                // Calculate the total for the selected appointment
+                decimal totalCita = 0;
+                foreach (DataRow row in dtCitaServicios.Rows)
+                {
+                    totalCita += Convert.ToDecimal(row["Subtotal"]);
+                }
+                CultureInfo culturePE = new CultureInfo("es-PE"); // For Peruvian Soles currency format
+
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel";
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteServiciosCita_" + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble());
+
+                StringBuilder sb = new StringBuilder();
+
+                // HTML header for Excel compatibility
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>ServiciosCita</x:Name>");
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Report Title and Info
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='4' align='center'><b>REPORTE DE SERVICIOS POR CITA</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'>");
+                sb.Append("<tr><td colspan='4' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='4' align='left'>Cita Seleccionada: " + Server.HtmlEncode(infoCitaSeleccionada) + "</td></tr>");
+                sb.Append("</table>");
+                sb.Append("<br>");
+
+                // Data Table
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Add header row
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                foreach (DataColumn column in dtCitaServicios.Columns)
+                {
+                    sb.Append("<th>" + Server.HtmlEncode(column.ColumnName) + "</th>");
+                }
+                sb.Append("</tr>");
+
+                // Add data rows
+                foreach (DataRow row in dtCitaServicios.Rows)
+                {
+                    sb.Append("<tr>");
+                    foreach (DataColumn column in dtCitaServicios.Columns)
+                    {
+                        // Apply currency formatting to numeric columns
+                        if (column.ColumnName == "Precio Unitario" || column.ColumnName == "Subtotal")
+                        {
+                            decimal value = Convert.ToDecimal(row[column]);
+                            sb.Append("<td>" + value.ToString("C", culturePE) + "</td>");
+                        }
+                        else
+                        {
+                            sb.Append("<td>" + Server.HtmlEncode(row[column].ToString()) + "</td>");
+                        }
+                    }
+                    sb.Append("</tr>");
+                }
+
+                // Add Total row
+                sb.Append("<tr>");
+                sb.Append("<td colspan='3' align='right'><b>Total General:</b></td>");
+                sb.Append("<td><b>" + totalCita.ToString("C", culturePE) + "</b></td>");
+                sb.Append("</tr>");
+
+                sb.Append("</table>");
+                sb.Append("</body></html>");
+
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
+            }
+        }
+
     }
 }

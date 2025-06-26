@@ -448,9 +448,9 @@
 
             </div>
 
-            <!-- Botón para abrir el Modal de Añadir/Editar -->
+
             <div class="d-flex justify-content-between align-items-center mb-4">
-    <%-- Contenedor para el botón de la izquierda --%>
+
                 <div>
                     <button type="button" class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#subcategoriaModal" data-mode="add">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-2" viewBox="0 0 16 16">
@@ -461,12 +461,11 @@
                     </button>
                 </div>
 
-                <%-- Contenedor para los botones de la derecha --%>
                 <div>
                     <asp:LinkButton ID="btnImprimirPdf" runat="server" CssClass="btn btn-custom me-2" OnClick="btnImprimirPdf_Click">
                         <i class="bi bi-file-earmark-pdf me-2"></i> Reporte PDF
                     </asp:LinkButton>
-                    <%-- BOTÓN PARA EXCEL: Añade btn-custom para heredar el estilo base, y luego btn-excel-custom para el color --%>
+
                     <asp:LinkButton ID="btnExportarExcel" runat="server" CssClass="btn btn-light" OnClick="btnExportarExcel_Click" ToolTip="Exportar a Excel"
                         Style="padding: 0.5rem 1rem; width: auto; height: auto; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dee2e6; min-width: 45px;">
                         <img src="<%= ResolveUrl("~/Assets/Images/excel.png") %>" alt="Excel" style="width: 28px; height: 28px; margin: 0; padding: 0;" />
