@@ -725,11 +725,6 @@ namespace VetWeb
                 }
 
                 sb.Append("</table>");
-
-                sb.Append("<br>");
-                sb.Append("<table border='0' style='font-family: Arial; font-size: 9pt; color: #808080;'><tr><td colspan='" + dtSubcategorias.Columns.Count + "' align='center'>Este es un reporte interno de subcategorías de VetWeb.</td></tr></table>");
-                sb.Append("<table border='0' style='font-family: Arial; font-size: 8pt; color: #C0C0C0;'><tr><td colspan='" + dtSubcategorias.Columns.Count + "' align='center'>Generado por VetWeb - Tu solución para la gestión veterinaria.</td></tr></table>");
-
                 sb.Append("</body></html>");
 
                 Response.Write(sb.ToString());

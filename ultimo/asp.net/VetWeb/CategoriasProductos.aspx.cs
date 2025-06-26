@@ -429,12 +429,6 @@ namespace VetWeb
                 }
 
                 sb.Append("</table>");
-
-                // Notas al pie de página (opcional en Excel, pero podemos incluirlo)
-                sb.Append("<br>");
-                sb.Append("<table border='0' style='font-family: Arial; font-size: 9pt; color: #808080;'><tr><td colspan='1' align='center'>Este es un reporte interno de categorías de productos de VetWeb.</td></tr></table>");
-                sb.Append("<table border='0' style='font-family: Arial; font-size: 8pt; color: #C0C0C0;'><tr><td colspan='1' align='center'>Generado por VetWeb - Tu solución para la gestión veterinaria.</td></tr></table>");
-
                 sb.Append("</body></html>");
 
                 // Escribir el contenido en el flujo de respuesta

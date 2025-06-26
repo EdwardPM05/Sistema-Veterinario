@@ -1,14 +1,15 @@
-﻿using System;
+﻿using iTextSharp.text; // iTextSharp core
+using iTextSharp.text.pdf; // iTextSharp PDF functionality
+using System;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO; // Necesario para MemoryStream
+using System.Linq; // Necesario para Enumerable.Repeat
 using System.Text.RegularExpressions; // Necesario para expresiones regulares
 using System.Web.UI; // Necesario para ScriptManager
 using System.Web.UI.WebControls;
-using System.IO; // Necesario para MemoryStream
-using iTextSharp.text; // iTextSharp core
-using iTextSharp.text.pdf; // iTextSharp PDF functionality
-using System.Linq; // Necesario para Enumerable.Repeat
+using System.Text;
 
 namespace VetWeb
 {
@@ -700,6 +701,115 @@ namespace VetWeb
                 {
                     doc.Close();
                 }
+            }
+        }
+
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtServicios = new DataTable();
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarServicio.Text.Trim()) ? "Ninguno" : txtBuscarServicio.Text.Trim();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de los servicios (aplicando el filtro de búsqueda actual si lo hay)
+                string query = @"
+                    SELECT
+                        S.NombreServicio,
+                        S.Precio,
+                        ISNULL(SC.Nombre, 'N/A') AS NombreSubcategoria
+                    FROM Servicios S
+                    LEFT JOIN Subcategoria SC ON S.SubcategoriaID = SC.SubcategoriaID";
+
+                if (!string.IsNullOrEmpty(txtBuscarServicio.Text.Trim()))
+                {
+                    query += " WHERE S.NombreServicio LIKE '%' + @SearchTerm + '%' " +
+                                  "OR SC.Nombre LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY S.NombreServicio";
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarServicio.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarServicio.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtServicios);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtServicios.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de servicios para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel";
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteServicios_" + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble());
+
+                StringBuilder sb = new StringBuilder();
+
+                // Encabezado para la compatibilidad con Excel
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>Servicios</x:Name>");
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='3' align='center'><b>REPORTE DE SERVICIOS</b></td></tr></table>"); // Cambiado colspan a 3 para 3 columnas
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='3' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='3' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>"); // Usa filtroAplicado aquí, colspan 3
+                sb.Append("<br>");
+
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Encabezados de la tabla Excel
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                sb.Append("<th>Nombre del Servicio</th>");
+                sb.Append("<th>Precio</th>");
+                sb.Append("<th>Subcategoría</th>");
+                sb.Append("</tr>");
+
+                // Datos de la tabla Excel
+                foreach (DataRow row in dtServicios.Rows)
+                {
+                    sb.Append("<tr>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["NombreServicio"].ToString()) + "</td>");
+                    // Formatear el precio para Excel
+                    sb.Append("<td>" + Convert.ToDecimal(row["Precio"]).ToString("F2") + "</td>"); // Formato decimal con 2 decimales
+                    sb.Append("<td>" + Server.HtmlEncode(row["NombreSubcategoria"].ToString()) + "</td>");
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+
+                sb.Append("</body></html>");
+
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
             }
         }
     }
