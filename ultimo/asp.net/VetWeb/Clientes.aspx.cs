@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Web; // Necesario para HttpResponse
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Text;
 
 namespace VetWeb
 {
@@ -690,6 +691,120 @@ namespace VetWeb
                 {
                     doc.Close();
                 }
+            }
+        }
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtClientes = new DataTable();
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarNombreCliente.Text.Trim()) ? "Ninguno" : txtBuscarNombreCliente.Text.Trim();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de los clientes (aplicando el filtro de búsqueda actual si lo hay)
+                string query = "SELECT PrimerNombre, ApellidoPaterno, ApellidoMaterno, DNI, Telefono, Direccion, Correo FROM Clientes";
+
+                if (!string.IsNullOrEmpty(txtBuscarNombreCliente.Text.Trim()))
+                {
+                    query += " WHERE PrimerNombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR ApellidoPaterno LIKE '%' + @SearchTerm + '%' " +
+                             "OR ApellidoMaterno LIKE '%' + @SearchTerm + '%' " +
+                             "OR DNI LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY PrimerNombre, ApellidoPaterno"; // Ordenar para una visualización consistente
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarNombreCliente.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarNombreCliente.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtClientes);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtClientes.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de clientes para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                // Configurar la respuesta para descargar un archivo Excel
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel"; // MIME type para Excel 97-2003
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteClientes_" + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble()); // Para UTF-8 con BOM
+
+                // Usar StringBuilder para construir el contenido HTML de la tabla
+                StringBuilder sb = new StringBuilder();
+
+                // Cabecera HTML para Excel (opcional pero recomendable para una mejor compatibilidad)
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>Clientes</x:Name>");
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='7' align='center'><b>REPORTE DE CLIENTES</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='7' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='7' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>");
+                sb.Append("<br>"); // Salto de línea para separar el encabezado de la tabla de datos
+
+                // Crear la tabla HTML para los datos
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Añadir fila de encabezados
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                sb.Append("<th>Primer Nombre</th>");
+                sb.Append("<th>Apellido Paterno</th>");
+                sb.Append("<th>Apellido Materno</th>");
+                sb.Append("<th>DNI</th>");
+                sb.Append("<th>Teléfono</th>");
+                sb.Append("<th>Dirección</th>");
+                sb.Append("<th>Correo</th>");
+                sb.Append("</tr>");
+
+                // Añadir filas de datos
+                foreach (DataRow row in dtClientes.Rows)
+                {
+                    sb.Append("<tr>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["PrimerNombre"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["ApellidoPaterno"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["ApellidoMaterno"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["DNI"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["Telefono"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["Direccion"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["Correo"].ToString()) + "</td>");
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+                sb.Append("</body></html>");
+
+                // Escribir el contenido en el flujo de respuesta
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
             }
         }
     }

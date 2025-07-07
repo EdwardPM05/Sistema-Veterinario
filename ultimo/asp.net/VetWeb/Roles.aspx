@@ -10,6 +10,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <style>
+        /* Inclusión de la fuente Flexo Soft Demi */
+        @font-face {
+            font-family: 'Flexo Soft Demi';
+            src: url('<%= ResolveUrl("~/Assets/Fonts/FlexoSoftDemi.woff") %>') format('woff');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+
         /* Global box-sizing for consistent layout */
         html, body {
             box-sizing: border-box;
@@ -18,7 +27,7 @@
             box-sizing: inherit;
         }
 
-        /* Definición de variables CSS para colores (Paleta: Elegante y Moderna - Tonos Gris Azulado y Toques de Blanco/Plata) */
+        /* Definición de variables CSS para colores */
         :root {
             --body-bg: #F0F2F5; /* Fondo principal gris claro muy suave */
             --text-color: #333333; /* Texto general gris oscuro */
@@ -46,95 +55,60 @@
             --alert-danger-bg: #f8d7da;
             --alert-danger-color: #721c24;
             --alert-danger-border: #f5c6cb;
-            --alert-success-icon-color: #28a745; /* Verde de Bootstrap para el ícono de éxito */
-            --alert-danger-icon-color: #DC3545; /* Rojo de Bootstrap para el ícono de peligro */
+            --alert-success-icon-color: #28a745;
+            --alert-danger-icon-color: #DC3545;
         }
 
         body {
             min-height: 100vh;
-            overflow-x: hidden; /* Prevent horizontal scroll for the entire body */
-            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            font-family: 'Flexo Soft Demi', 'Inter', sans-serif;
             background-color: var(--body-bg);
             color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
-            padding-left: 220px; /* Space for fixed sidebar on desktop */
+            padding-left: 220px;
         }
         
-        /* Sidebar styling for desktop/tablet */
+        /* Sidebar styling */
         .sidebar {
-            position: fixed;
-            top: 0;
-            width: 220px;
-            height: 100vh;
-            background-color: var(--sidebar-bg);
-            padding-top: 1rem;
-            box-shadow: 2px 0 5px var(--card-shadow);
-            overflow-y: auto; /* Scrollbar appears only when content overflows vertically */
-            overflow-x: hidden; /* **CRITICAL: Ensure no horizontal scrollbar within sidebar** */
-            z-index: 1030; /* Higher than content */
-            transition: left 0.3s ease; /* Smooth transition for sliding */
-            left: 0; /* Default position for large screens */
+            position: fixed; top: 0; width: 220px; height: 100vh; background-color: var(--sidebar-bg);
+            padding-top: 1rem; box-shadow: 2px 0 5px var(--card-shadow); overflow-y: auto;
+            overflow-x: hidden; z-index: 1030; transition: left 0.3s ease; left: 0;
         }
         .sidebar .nav-link {
-            color: var(--sidebar-text);
-            font-weight: 500;
-            padding: 12px 20px; /* Consistent padding-left for all nav links */
-            transition: background-color 0.3s, color 0.3s;
-            border-radius: 8px;
-            margin: 0 10px 5px 10px; /* Margin around the link item */
-            display: flex; /* Make it a flex container */
-            align-items: center; /* Vertically align items */
-            justify-content: space-between; /* Pushes caret to the right, allows space for text */
-            white-space: nowrap; /* Keep content on one line */
-            overflow: hidden; /* Hide overflow of content within the link */
-            text-overflow: ellipsis; /* Show ellipsis for overflowing text */
+            color: var(--sidebar-text); font-weight: 500; padding: 12px 20px;
+            transition: background-color 0.3s, color 0.3s; border-radius: 8px;
+            margin: 0 10px 5px 10px; display: flex; align-items: center;
+            justify-content: space-between; white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .sidebar .nav-link i { /* Style for Bootstrap Icons (main and sub-menu icons) */
-            margin-right: 10px; /* Space between icon and text */
-            font-size: 1.1rem;
-            width: 20px; /* Fixed width for icons to align text */
-            text-align: center;
-            flex-shrink: 0; /* **IMPORTANT: Prevent icon from shrinking** */
+        .sidebar .nav-link i {
+            margin-right: 10px; font-size: 1.1rem; width: 20px; text-align: center; flex-shrink: 0;
         }
-        .sidebar .nav-link span { /* For text within nav-link */
-            flex-grow: 1; /* Allow text to grow and take available space */
-            flex-shrink: 1; /* **IMPORTANT: Allow text to shrink if necessary** */
-            min-width: 0; /* **CRITICAL: Allows flex item to shrink properly with text-overflow** */
+        .sidebar .nav-link span {
+            flex-grow: 1; flex-shrink: 1; min-width: 0;
         }
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background-color: var(--sidebar-hover-bg);
-            color: var(--sidebar-hover-text);
+            background-color: var(--sidebar-hover-bg); color: var(--sidebar-hover-text);
         }
         .sidebar-brand {
-            color: var(--sidebar-hover-text);
-            font-size: 1.8rem;
-            font-weight: 700;
-            padding: 0 20px 1rem;
-            border-bottom: 1px solid var(--sidebar-hover-bg);
-            margin-bottom: 1rem;
-            display: flex; /* Para alinear el icono */
-            align-items: center; /* Para alinear el icono */
-            justify-content: center; /* Centrar el contenido de la marca */
-            text-decoration: none;
+            color: var(--sidebar-hover-text); font-size: 1.8rem; font-weight: 700;
+            padding: 0 20px 1rem; border-bottom: 1px solid var(--sidebar-hover-bg);
+            margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; text-decoration: none;
         }
         .sidebar-brand svg {
-            margin-right: 10px;
-            font-size: 2.2rem;
+            margin-right: 10px; font-size: 2.2rem;
         }
 
-        /* Content area positioning for desktop/tablet */
+        /* Content area positioning */
         .content {
-            margin-left: 0; /* Content starts after sidebar's padding-left */
-            padding: 2rem;
-            position: relative;
+            margin-left: 0; padding: 2rem; position: relative;
         }
         h2 {
-            color: var(--text-color);
-            transition: color 0.3s;
+            color: var(--text-color); transition: color 0.3s;
         }
         .card {
-            border-radius: 10px;
-            box-shadow: 0 4px 10px var(--card-shadow);
+            border-radius: 10px; box-shadow: 0 4px 10px var(--card-shadow);
             transition: transform 0.2s ease-in-out, background-color 0.3s, box-shadow 0.3s;
             background-color: var(--card-bg);
         }
@@ -148,12 +122,13 @@
             border-top-left-radius: 10px;
             border-top-right-radius: 10px;
             transition: background-color 0.3s;
+            text-align: center;
+            font-size: 1.1rem;
+            padding: 15px;
+            text-transform: uppercase;
         }
         .card-body h3 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--card-number-color);
-            transition: color 0.3s;
+            font-size: 2.5rem; font-weight: 700; color: var(--card-number-color); transition: color 0.3s;
         }
         .card-text.text-muted {
             color: var(--text-color) !important;
@@ -161,311 +136,212 @@
 
         /* Styles for dropdown caret */
         .dropdown-caret {
-            transition: transform 0.3s ease;
-            margin-left: 8px;
-            flex-shrink: 0;
-            font-size: 0.9rem;
+            transition: transform 0.3s ease; margin-left: 8px; flex-shrink: 0; font-size: 0.9rem;
         }
-        /* Rotate caret when collapse is open */
         .nav-link[aria-expanded="true"] .dropdown-caret {
             transform: rotate(-180deg);
         }
 
         /* Styles for collapsible sub-menu items */
         .sidebar .nav-item .collapse .nav-item {
-            margin-left: 20px;
-            margin-bottom: 2px;
-            margin-right: 0;
+            margin-left: 20px; margin-bottom: 2px; margin-right: 0;
         }
         .sidebar .nav-item .collapse .nav-link {
             justify-content: flex-start;
         }
         .sidebar .nav-item .collapse .nav-link i {
-            font-size: 0.95rem;
-            width: 18px;
-            flex-shrink: 0;
-            margin-right: 8px;
-            text-align: center;
+            font-size: 0.95rem; width: 18px; flex-shrink: 0; margin-right: 8px; text-align: center;
         }
 
         /* Specific styles for forms, tables, modals */
         .btn-custom {
-            background-color: var(--btn-custom-bg);
-            color: white;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-size: 1.1rem;
-            transition: background-color 0.3s ease;
-            border: none;
+            background-color: var(--btn-custom-bg); color: white; border-radius: 8px;
+            padding: 10px 20px; font-size: 1.1rem; transition: background-color 0.3s ease; border: none;
         }
         .btn-custom:hover {
-            background-color: var(--btn-custom-hover-bg);
-            color: white;
+            background-color: var(--btn-custom-hover-bg); color: white;
         }
 
-
-        /* Add this new rule for your table */
+        /* --- STYLES PARA LA TABLA --- */
         .table {
-            border-radius: 10px; /* Apply border-radius to the table */
-            overflow: hidden; /* Crucial to clip internal elements to the rounded corners */
-            border-collapse: separate; /* Required for border-radius to work with table borders */
-            border-spacing: 0; /* Ensures no gap between cells if border-collapse is separate */
+            border-collapse: collapse;
+            border-spacing: 0;
+            border-radius: 0; /* No redondeado */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            background-color: var(--card-bg);
+            border: 1px solid #EEEEEE; /* Borde exterior de la tabla */
         }
 
-        /* If your table is typically wrapped inside a .card-body or similar,
-           you might want to ensure the table itself also has the rounded corners.
-           The .card-header already has rounded top corners.
-           For the bottom corners, you'd want the table's bottom corners to align.
-        */
-        .table-primary th:first-child {
-            border-top-left-radius: 10px; /* Match card-header */
-        }
-        .table-primary th:last-child {
-            border-top-right-radius: 10px; /* Match card-header */
+        .table thead {
+            background-color: #F8F8F8;
         }
 
-        /* For the bottom corners of the table */
-        .table tbody tr:last-child td:first-child {
-            border-bottom-left-radius: 10px;
-        }
-        .table tbody tr:last-child td:last-child {
-            border-bottom-right-radius: 10px;
-        }
-
-
-
-        .table-striped tbody tr:nth-of-type(odd) {
-            background-color: var(--card-bg); /* Use card-bg for odd rows */
-        }
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.04);
-        }
-        .table-primary th {
-            background-color: var(--card-header-bg);
-            color: white;
-            border-color: var(--card-header-bg);
+        .table th {
+            color: #666666;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            padding: 10px 10px; /* Reducir padding horizontal para los encabezados */
+            border: 1px solid #EEEEEE; /* Bordes para las celdas del encabezado */
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            text-align: left; /* Alineación a la izquierda para los textos del encabezado */
         }
 
-        /* Agrega o modifica estas reglas en tu sección <style> */
-
-        /* Regla para quitar la línea debajo de los iconos (si acaso persistía) */
-        .table .icon-action {
-            text-decoration: none !important; /* Asegura que no haya subrayado */
-            display: inline-block; /* Importante para que el margen y el padding funcionen bien */
-            padding: 0; /* Elimina cualquier padding predeterminado */
-            margin: 0; /* Elimina cualquier margen predeterminado */
-            border: none !important; /* Asegura que no haya bordes inesperados */
-            background-color: transparent !important; /* Fondo transparente */
-            line-height: 1; /* Ayuda a controlar el espacio vertical */
-            vertical-align: middle; /* Alinea los iconos verticalmente */
+        /* Solo la primera y última th tendrán borde lateral para el "marco" */
+        .table th:first-child {
+            border-left: 1px solid #EEEEEE;
+        }
+        .table th:last-child {
+            border-right: 1px solid #EEEEEE;
+            text-align: right; /* La última columna (acciones) a la derecha */
+            padding-right: 25px; /* Aumentar el padding derecho para "ACCIONES" */
+            min-width: 100px; /* Asegura un poco más de espacio para "ACCIONES" */
         }
 
-        /* Espacio entre los iconos, aplicado al primer icono */
-        .table .icon-action:first-of-type {
-            margin-right: 15px; /* Ajusta este valor (ej. 10px, 20px) para el espacio deseado entre el lápiz y el tacho */
+        /* Eliminar border-radius específicos para thead */
+        .table th:first-child { border-top-left-radius: 0; }
+        .table th:last-child { border-top-right-radius: 0; }
+
+        /* **Mágico: Sobrescribimos las variables CSS de Bootstrap directamente en las celdas** */
+        .table td {
+            --bs-table-bg: var(--card-bg) !important;
+            --bs-table-striped-bg: var(--card-bg) !important;
+            background-color: var(--card-bg) !important;
+            padding: 10px 10px; /* Reducir padding horizontal para las celdas de datos */
+            color: var(--text-color);
+            border: none; /* Quitar todos los bordes de TD por defecto */
+            border-bottom: 1px solid #EEEEEE; /* Solo borde inferior para las filas */
+            vertical-align: middle; /* Asegura que el contenido, incluyendo iconos, esté centrado verticalmente */
+            text-align: left; /* Alineación a la izquierda para el contenido de las celdas de datos */
+            font-size: 0.95em;
+        }
+        
+        /* Aseguramos que la fila completa (tr) también sea blanca */
+        .table tbody tr {
+            background-color: var(--card-bg) !important;
         }
 
-        /* Efecto hover opcional para cuando pases el mouse por encima del icono */
-        .table .icon-action:hover {
-            opacity: 0.7; /* Hace el icono ligeramente transparente */
-            transform: scale(1.1); /* Hace el icono ligeramente más grande */
-            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        /* Eliminar bordes inferiores para la última fila */
+        .table tbody tr:last-child {
+            border-bottom: none;
+        }
+        .table tbody tr:last-child td {
+            border-bottom: none; /* Asegura que la última fila no tenga borde inferior */
+        }
+        /* Eliminar border-radius específicos para tbody */
+        .table tbody tr:last-child td:first-child { border-bottom-left-radius: 0; }
+        .table tbody tr:last-child td:last-child { border-bottom-right-radius: 0; }
+
+
+        /* Sobreescribir .table-striped y .table-hover con mayor especificidad y !important */
+        .table.table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: var(--card-bg) !important;
+        }
+        .table.table-hover > tbody > tr:hover {
+            background-color: #F5F5F5 !important;
+        }
+        
+        /* Para GridView si estás usando HeaderStyle CssClass="thead-light" */
+        .table thead.thead-light th {
+            background-color: #F8F8F8 !important;
+            color: #666666 !important;
         }
 
-
-
-        /* Asegurar que el sr-only no afecte el layout visual */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
+        /* Estilos para los iconos de acción dentro de la tabla */
+        .table .action-icons-cell {
+            text-align: right; /* Alinear los iconos de acción a la derecha */
             white-space: nowrap;
-            border: 0;
+            padding-right: 25px; /* Aumentar el padding derecho para la celda de acciones */
+            /* min-width ya se definió en th:last-child para controlar el ancho de la columna */
         }
+
+        .table .icon-action {
+            text-decoration: none !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            color: #666666;
+            font-size: 1em;
+            transition: all 0.2s ease-in-out;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+        .table .icon-action:hover {
+            background-color: rgba(0,0,0,0.05);
+            color: #333333;
+            transform: translateY(-2px);
+        }
+        .table .icon-action.edit-icon {
+            color: #007bff;
+        }
+        .table .icon-action.delete-icon {
+            color: #dc3545;
+        }
+        .table .icon-action + .icon-action {
+            margin-left: 3px;
+        }
+
+
+        /* Otros estilos que ya tenías */
         .modal-header {
-            background-color: var(--card-header-bg);
-            color: white;
-            border-top-left-radius: 10px;
+            background-color: var(--card-header-bg); color: white; border-top-left-radius: 10px;
             border-top-right-radius: 10px;
         }
         .modal-content {
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.2);
         }
-        .form-control {
-            border-radius: 8px;
-        }
-        .btn {
-            border-radius: 8px;
-        }
+        .form-control { border-radius: 8px; }
+        .btn { border-radius: 8px; }
         .alert {
-            border-radius: 8px;
-            padding: 10px 15px;
-            margin-bottom: 15px;
-            font-size: 0.95rem;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            word-wrap: break-word;
-            white-space: normal;
+            border-radius: 8px; padding: 10px 15px; margin-bottom: 15px; font-size: 0.95rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); word-wrap: break-word; white-space: normal;
         }
-        .alert-success {
-            background-color: var(--alert-success-bg);
-            color: var(--alert-success-color);
-            border-color: var(--alert-success-border);
-        }
-        .alert-danger {
-            background-color: var(--alert-danger-bg);
-            color: var(--alert-danger-color);
-            border-color: var(--alert-danger-border);
-        }
-        .alert-danger::before {
-            content: "\2716";
-            font-size: 1.2rem;
-            margin-right: 0.5rem;
-            vertical-align: middle;
-            display: inline-block;
-            line-height: 1;
-            color: var(--alert-danger-icon-color);
-        }
-        .alert-success::before {
-            content: "\2714";
-            font-size: 1.2rem;
-            margin-right: 0.5rem;
-            vertical-align: middle;
-            display: inline-block;
-            line-height: 1;
-            color: var(--alert-success-icon-color);
-        }
-        .search-input-group .form-control {
-            border-top-left-radius: 8px;
-            border-bottom-left-radius: 8px;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-            border-color: #ced4da;
-            box-shadow: none;
-        }
-        .search-input-group .form-control:focus {
-            border-color: var(--form-control-focus-border);
-            box-shadow: 0 0 0 0.25rem var(--form-control-focus-shadow);
-        }
-        .search-input-group .btn {
-            border-radius: 0;
-            font-weight: 600;
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-        /* Specific IDs for search buttons in Roles.aspx */
-        .search-input-group #btnBuscarRol { 
-            background-color: var(--btn-custom-bg);
-            color: white;
-            border-color: var(--btn-custom-bg);
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-        .search-input-group #btnBuscarRol:hover {
-            background-color: var(--btn-custom-hover-bg);
-            border-color: var(--btn-custom-hover-bg);
-        }
-        .search-input-group #btnLimpiarBusquedaRol {
-            background-color: var(--btn-clear-bg);
-            color: white;
-            border-color: var(--btn-clear-bg);
-            border-top-right-radius: 8px;
-            border-bottom-right-radius: 8px;
-        }
-        .search-input-group #btnLimpiarBusquedaRol:hover {
-            background-color: var(--btn-clear-hover-bg);
-            border-color: var(--btn-clear-hover-bg);
-        }
-        .search-input-group .btn:not(:last-child) {
-            border-right: 1px solid rgba(0,0,0,.125);
-        }
+        .alert-success { background-color: var(--alert-success-bg); color: var(--alert-success-color); border-color: var(--alert-success-border); }
+        .alert-danger { background-color: var(--alert-danger-bg); color: var(--alert-danger-color); border-color: var(--alert-danger-border); }
+        .alert-danger::before { content: "\2716"; font-size: 1.2rem; margin-right: 0.5rem; vertical-align: middle; display: inline-block; line-height: 1; color: var(--alert-danger-icon-color); }
+        .alert-success::before { content: "\2714"; font-size: 1.2rem; margin-right: 0.5rem; vertical-align: middle; display: inline-block; line-height: 1; color: var(--alert-success-icon-color); }
+
+        .search-input-group .form-control { border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-top-right-radius: 0; border-bottom-right-radius: 0; border-color: #ced4da; box-shadow: none; }
+        .search-input-group .form-control:focus { border-color: var(--form-control-focus-border); box-shadow: 0 0 0 0.25rem var(--form-control-focus-shadow); }
+        .search-input-group .btn { border-radius: 0; font-weight: 600; padding-left: 1rem; padding-right: 1rem; }
+        .search-input-group #btnBuscarRol { background-color: var(--btn-custom-bg); color: white; border-color: var(--btn-custom-bg); border-top-right-radius: 0; border-bottom-right-radius: 0; }
+        .search-input-group #btnBuscarRol:hover { background-color: var(--btn-custom-hover-bg); border-color: var(--btn-custom-hover-bg); }
+        .search-input-group #btnLimpiarBusquedaRol { background-color: var(--btn-clear-bg); color: white; border-color: var(--btn-clear-bg); border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+        .search-input-group #btnLimpiarBusquedaRol:hover { background-color: var(--btn-clear-hover-bg); border-color: var(--btn-clear-hover-bg); }
+        .search-input-group .btn:not(:last-child) { border-right: 1px solid rgba(0,0,0,.125); }
+
         /* Modal width adjustments */
-        .modal-dialog {
-            max-width: 500px;
-            width: 90%;
-        }
-        @media (min-width: 576px) {
-            .modal-dialog {
-                max-width: 550px;
-            }
-        }
-        @media (min-width: 768px) {
-            .modal-dialog {
-                max-width: 600px;
-            }
-        }
+        .modal-dialog { max-width: 600px; width: 90%; }
+        @media (min-width: 576px) { .modal-dialog { max-width: 650px; } }
+        @media (min-width: 768px) { .modal-dialog { max-width: 700px; } }
 
-        /* --- RESPONSIVE STYLES FOR MOBILE --- */
+        /* Responsive styles */
         @media (max-width: 767.98px) {
-            .sidebar {
-                left: -220px;
-                box-shadow: none;
-                z-index: 1040;
-            }
-            .sidebar.show {
-                left: 0;
-                box-shadow: 2px 0 5px var(--card-shadow);
-            }
-
-            body {
-                padding-left: 0;
-                padding-top: 5rem;
-            }
-
-            .content {
-                padding: 1rem;
-            }
-
-            /* Responsive button to toggle sidebar */
+            .sidebar { left: -220px; box-shadow: none; z-index: 1040; }
+            .sidebar.show { left: 0; box-shadow: 2px 0 5px var(--card-shadow); }
+            body { padding-left: 0; padding-top: 5rem; }
+            .content { padding: 1rem; }
             #sidebarToggle {
-                display: flex !important;
-                position: fixed;
-                top: 15px;
-                left: 15px;
-                z-index: 1050;
-                border-radius: 50%;
-                width: 45px;
-                height: 45px;
-                align-items: center;
-                justify-content: center;
-                background-color: var(--sidebar-bg);
-                border-color: var(--sidebar-hover-bg);
-                color: var(--sidebar-text);
+                display: flex !important; position: fixed; top: 15px; left: 15px; z-index: 1050;
+                border-radius: 50%; width: 45px; height: 45px; align-items: center; justify-content: center;
+                background-color: var(--sidebar-bg); border-color: var(--sidebar-hover-bg); color: var(--sidebar-text);
                 transition: background-color 0.3s, color 0.3s, border-color 0.3s;
             }
-            #sidebarToggle:hover {
-                background-color: var(--sidebar-hover-bg);
-                color: var(--sidebar-hover-text);
-            }
-
-            /* Backdrop for when sidebar is open on mobile */
+            #sidebarToggle:hover { background-color: var(--sidebar-hover-bg); color: var(--sidebar-hover-text); }
             .sidebar-backdrop {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.5);
-                z-index: 1039;
-                display: none;
-                transition: opacity 0.3s ease;
-                opacity: 0;
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background-color: rgba(0, 0, 0, 0.5); z-index: 1039; display: none; transition: opacity 0.3s ease; opacity: 0;
             }
-            .sidebar-backdrop.show {
-                display: block;
-                opacity: 1;
-            }
-
-            /* Prevent body scrolling when sidebar is open */
-            body.overflow-hidden {
-                overflow: hidden;
-            }
+            .sidebar-backdrop.show { display: block; opacity: 1; }
+            body.overflow-hidden { overflow: hidden; }
         }
-
     </style>
 </head>
 <body>
@@ -558,52 +434,62 @@
                     CssClass="btn btn-outline-secondary" 
                     ToolTip="Buscar">
                     <i class="bi bi-search fs-6"></i> 
-                    <span class="sr-only">Buscar</span> 
+                    <span class="sr-only"></span> 
                 </asp:LinkButton>
 
                 <asp:LinkButton ID="btnLimpiarBusquedaRol" runat="server" OnClick="btnLimpiarBusquedaRol_Click"
                     CssClass="btn btn-outline-secondary"
                     ToolTip="Limpiar">
                     <i class="bi bi-x-lg fs-6"></i> 
-                    <span class="sr-only">Limpiar</span> 
+                    <span class="sr-only"></span> 
                 </asp:LinkButton>
 
             </div>
 
-            <!-- Button to open the Add/Edit Modal -->
-            <button type="button" class="btn btn-custom mb-4" data-bs-toggle="modal" data-bs-target="#rolModal" data-mode="add">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-2" viewBox="0 0 16 16">
-                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                </svg>
-                Agregar Nuevo Rol
-            </button>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                
+                    <button type="button" class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#rolModal" data-mode="add">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-2" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                        Agregar Nuevo Rol
+                    </button>
+                
+                
+                    <%-- Botón para Exportar a Excel --%>
+                    <asp:LinkButton ID="btnExportarExcel" runat="server" CssClass="btn btn-light"  OnClick="btnExportarExcel_Click" ToolTip="Exportar a Excel"
+                        Style="padding: 0.5rem 1rem; width: auto; height: auto; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dee2e6; min-width: 45px;">
+                        <img src="<%= ResolveUrl("~/Assets/Images/excel.png") %>" alt="Excel" style="width: 28px; height: 28px; margin: 0; padding: 0;" />
+                    </asp:LinkButton>
+                
+                 </div>
+
 
             <hr />
 
             <asp:GridView ID="gvRoles" runat="server" AutoGenerateColumns="False" OnRowCommand="gvRoles_RowCommand"
-                CssClass="table table-bordered table-hover"
-                HeaderStyle-CssClass="table-primary"
+                CssClass="table table-bordered table-striped table-hover"
                 DataKeyNames="RolID">
                 <Columns>
                     <asp:BoundField DataField="NombreRol" HeaderText="Nombre del Rol" />
-                    <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="80px" ItemStyle-HorizontalAlign="Center">
+                    <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="120px" ItemStyle-HorizontalAlign="Center">
                         <ItemTemplate>
                             <asp:LinkButton ID="btnEditarRol" runat="server" CommandName="Editar"
-                                CssClass="icon-action icon-edit-custom"
+                                CssClass="icon-action icon-edit-custom ms-4 me-2"
                                 CommandArgument="<%# Container.DataItemIndex %>"
                                 ToolTip="Editar Rol">
                                 <i class="bi bi-pencil fs-5"></i>
-                                <span class="sr-only">Editar</span>
+                                <span class="sr-only"></span>
                             </asp:LinkButton>
                 
                             <asp:LinkButton ID="btnEliminarRol" runat="server" CommandName="Eliminar"
-                                CssClass="icon-action text-danger"
+                                CssClass="icon-action text-danger me-2"
                                 CommandArgument="<%# Container.DataItemIndex %>"
                                 OnClientClick="return confirm('¿Está seguro de que desea eliminar este rol?');"
                                 ToolTip="Eliminar Rol">
                                 <i class="bi bi-trash fs-5"></i>
-                                <span class="sr-only">Eliminar</span>
+                                <span class="sr-only"></span>
                             </asp:LinkButton>
                         </ItemTemplate>
                     </asp:TemplateField>

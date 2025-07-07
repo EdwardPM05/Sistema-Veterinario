@@ -10,6 +10,9 @@ using System.Text.RegularExpressions;
 using System.Web; // Necesario para HttpResponse
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Text;
+using System.Reflection;
+using System.Web.Caching;
 
 namespace VetWeb
 {
@@ -779,6 +782,131 @@ namespace VetWeb
         {
             txtBuscarNombreMascota.Text = ""; // Limpiar el textbox de búsqueda
             CargarMascotas(); // Recargar todas las mascotas sin filtro
+        }
+
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtMascotas = new DataTable();
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarNombreMascota.Text.Trim()) ? "Ninguno" : txtBuscarNombreMascota.Text.Trim();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de las mascotas (aplicando el filtro de búsqueda actual si lo hay)
+                string query = @"
+                    SELECT
+                        M.Nombre,
+                        M.Edad,
+                        CASE M.Sexo
+                            WHEN 'M' THEN 'Macho'
+                            WHEN 'H' THEN 'Hembra'
+                            ELSE 'Desconocido'
+                        END AS SexoMascota,         
+                        C.PrimerNombre + ' ' + C.ApellidoPaterno AS NombreCliente,
+                        R.NombreRaza
+                    FROM Mascotas M
+                    INNER JOIN Clientes C ON M.ClienteID = C.ClienteID
+                    INNER JOIN Razas R ON M.RazaID = R.RazaID" ; 
+
+                if (!string.IsNullOrEmpty(txtBuscarNombreMascota.Text.Trim()))
+                {
+                    query += " WHERE M.Nombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR C.PrimerNombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR C.ApellidoPaterno LIKE '%' + @SearchTerm + '%' " +
+                             "OR R.NombreRaza LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY M.Nombre"; // Ordenar para una visualización consistente
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarNombreMascota.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarNombreMascota.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtMascotas);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtMascotas.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de mascotas para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                // Configurar la respuesta para descargar un archivo Excel
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel"; // MIME type para Excel 97-2003
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteMascotas_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble()); // Para UTF-8 con BOM
+
+                // Usar StringBuilder para construir el contenido HTML de la tabla
+                StringBuilder sb = new StringBuilder();
+
+                // Cabecera HTML para Excel (opcional pero recomendable para una mejor compatibilidad)
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>Mascotas</x:Name>");
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                // Son 5 columnas (Nombre, Edad, Sexo, Cliente, Raza)
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='5' align='center'><b>REPORTE DE MASCOTAS</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='5' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='5' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>");
+                sb.Append("<br>"); // Salto de línea para separar el encabezado de la tabla de datos
+
+                // Crear la tabla HTML para los datos
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Añadir fila de encabezados
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                sb.Append("<th>Nombre Mascota</th>");
+                sb.Append("<th>Edad</th>");
+                sb.Append("<th>Sexo</th>");
+                sb.Append("<th>Cliente</th>");
+                sb.Append("<th>Raza</th>");
+                sb.Append("</tr>");
+
+                // Añadir filas de datos
+                foreach (DataRow row in dtMascotas.Rows)
+                {
+                    sb.Append("<tr>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["Nombre"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["Edad"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["SexoMascota"].ToString()) + "</td>"); // Usar SexoMascota
+                    sb.Append("<td>" + Server.HtmlEncode(row["NombreCliente"].ToString()) + "</td>");
+                    sb.Append("<td>" + Server.HtmlEncode(row["NombreRaza"].ToString()) + "</td>");
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+                sb.Append("</body></html>");
+
+                // Escribir el contenido en el flujo de respuesta
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
+            }
         }
     }
 }

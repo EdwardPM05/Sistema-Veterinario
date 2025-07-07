@@ -1,6 +1,4 @@
-﻿using iTextSharp.text;     // Necesario para la clase Document
-using iTextSharp.text.pdf; // Necesario para PdfWriter, PdfPTable, etc.
-using System;
+﻿using System;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -9,6 +7,10 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using iTextSharp.text;     // Necesario para la clase Document
+using iTextSharp.text.pdf; // Necesario para PdfWriter, PdfPTable, etc.
+using System.Text;
+
 
 namespace VetWeb
 {
@@ -786,6 +788,147 @@ namespace VetWeb
         {
             txtBuscarNombreEmpleado.Text = ""; // Limpiar el textbox de búsqueda
             CargarEmpleados(); // Recargar todos los empleados sin filtro
+        }
+
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtEmpleados = new DataTable();
+            // Utiliza txtBuscarNombreEmpleado para el filtro de búsqueda de empleados
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarNombreEmpleado.Text.Trim()) ? "Ninguno" : txtBuscarNombreEmpleado.Text.Trim();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de los empleados (aplicando el filtro de búsqueda actual si lo hay)
+                // Selecciona las columnas que quieres en tu Excel
+                string query = @"
+                    SELECT
+                        E.PrimerNombre,
+                        E.ApellidoPaterno,
+                        E.ApellidoMaterno,
+                        E.DNI,
+                        E.Correo,
+                        E.Telefono,
+                        R.NombreRol
+                    FROM Empleados E
+                    INNER JOIN Roles R ON E.RolID = R.RolID";
+
+                if (!string.IsNullOrEmpty(txtBuscarNombreEmpleado.Text.Trim()))
+                {
+                    query += " WHERE E.PrimerNombre LIKE '%' + @SearchTerm + '%' " +
+                                  "OR E.ApellidoPaterno LIKE '%' + @SearchTerm + '%' " +
+                                  "OR E.ApellidoMaterno LIKE '%' + @SearchTerm + '%' " +
+                                  "OR E.DNI LIKE '%' + @SearchTerm + '%' " +
+                                  "OR R.NombreRol LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY E.PrimerNombre, E.ApellidoPaterno"; // Ordenar para una visualización consistente
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarNombreEmpleado.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarNombreEmpleado.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtEmpleados);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtEmpleados.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de empleados para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                // Configurar la respuesta para descargar un archivo Excel (formato HTML/XLS)
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel"; // MIME type para Excel 97-2003
+                // Nombre del archivo Excel: ReporteEmpleados_FechaHoraActual.xls
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteEmpleados_" + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble()); // Para UTF-8 con BOM
+
+                // Usar StringBuilder para construir el contenido HTML de la tabla
+                StringBuilder sb = new StringBuilder();
+
+                // Cabecera HTML para Excel (opcional pero recomendable para una mejor compatibilidad)
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>Empleados</x:Name>"); // Nombre de la hoja en Excel
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                // Colspan será el número de columnas que vas a exportar (7 en este caso)
+                int numColumnas = dtEmpleados.Columns.Count;
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='" + numColumnas + "' align='center'><b>REPORTE DE EMPLEADOS</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='" + numColumnas + "' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='" + numColumnas + "' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>");
+                sb.Append("<br>"); // Salto de línea para separar el encabezado de la tabla de datos
+
+                // Crear la tabla HTML para los datos de los empleados
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Añadir fila de encabezados para la tabla de datos
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                // Recorrer las columnas del DataTable para generar los encabezados
+                foreach (DataColumn column in dtEmpleados.Columns)
+                {
+                    // Nombres más amigables para las columnas en el Excel
+                    string headerText = column.ColumnName;
+                    switch (column.ColumnName)
+                    {
+                        case "PrimerNombre": headerText = "Primer Nombre"; break;
+                        case "ApellidoPaterno": headerText = "Apellido Paterno"; break;
+                        case "ApellidoMaterno": headerText = "Apellido Materno"; break;
+                        case "DNI": headerText = "DNI"; break;
+                        case "Telefono": headerText = "Teléfono"; break;
+                        case "Correo": headerText = "Correo Electrónico"; break;
+                        case "NombreRol": headerText = "Rol"; break;
+                            // Puedes añadir más casos si cambias los nombres de las columnas en la consulta SQL
+                    }
+                    sb.Append("<th>" + headerText + "</th>");
+                }
+                sb.Append("</tr>");
+
+                // Añadir filas de datos
+                foreach (DataRow row in dtEmpleados.Rows)
+                {
+                    sb.Append("<tr>");
+                    foreach (object cellValue in row.ItemArray)
+                    {
+                        // Server.HtmlEncode para evitar problemas con caracteres especiales
+                        sb.Append("<td>" + Server.HtmlEncode(cellValue?.ToString() ?? "") + "</td>");
+                    }
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+
+                sb.Append("</body></html>");
+
+                // Escribir el contenido en el flujo de respuesta
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
+            }
         }
     }
 }

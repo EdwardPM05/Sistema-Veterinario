@@ -2,13 +2,16 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text.RegularExpressions; // Necesario para expresiones regulares
-using System.Web.UI; // Necesario para ScriptManager
+using System.Text.RegularExpressions;
+using System.Web.UI;
 using System.Web.UI.WebControls;
-using iTextSharp.text; // Add this for iTextSharp
-using iTextSharp.text.pdf; // Add this for iTextSharp
-using System.IO; // Add this for MemoryStream and File.Exists
-using System.Linq; // Add this for Enumerable.Repeat
+using iTextSharp.text; // Add this for iTextSharp (keeping existing usings)
+using iTextSharp.text.pdf; // Add this for iTextSharp (keeping existing usings)
+using System.IO; // Add this for MemoryStream and File.Exists (keeping existing usings)
+using System.Linq; // Add this for Enumerable.Repeat (keeping existing usings)
+using System.Text; // Necesario para StringBuilder (asegúrate de que esté, si no, añádelo)
+using System.Web; // Necesario para HttpUtility.HtmlEncode (asegúrate de que esté)
+
 
 namespace VetWeb
 {
@@ -749,6 +752,127 @@ namespace VetWeb
                 {
                     doc.Close();
                 }
+            }
+        }
+
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtCitas = new DataTable();
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarCita.Text.Trim()) ? "Ninguno" : txtBuscarCita.Text.Trim();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de las citas (aplicando el filtro de búsqueda actual si lo hay)
+                string query = @"
+                    SELECT
+                        C.Fecha,
+                        Cl.PrimerNombre + ' ' + Cl.ApellidoPaterno AS NombreCliente,
+                        M.Nombre AS NombreMascota,
+                        E.PrimerNombre + ' ' + E.ApellidoPaterno AS NombreEmpleado
+                    FROM Citas C
+                    INNER JOIN Mascotas M ON C.MascotaID = M.MascotaID
+                    INNER JOIN Clientes Cl ON M.ClienteID = Cl.ClienteID
+                    INNER JOIN Empleados E ON C.EmpleadoID = E.EmpleadoID";
+
+                if (!string.IsNullOrEmpty(txtBuscarCita.Text.Trim()))
+                {
+                    query += " WHERE Cl.PrimerNombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR Cl.ApellidoPaterno LIKE '%' + @SearchTerm + '%' " +
+                             "OR M.Nombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR E.PrimerNombre LIKE '%' + @SearchTerm + '%' " +
+                             "OR E.ApellidoPaterno LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY C.Fecha DESC"; // Ordenar para una visualización consistente
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarCita.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarCita.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtCitas);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtCitas.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de citas para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                // Configurar la respuesta para descargar un archivo Excel
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel"; // MIME type para Excel 97-2003
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteCitas_"    + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble()); // Para UTF-8 con BOM
+
+                // Usar StringBuilder para construir el contenido HTML de la tabla
+                StringBuilder sb = new StringBuilder();
+
+                // Cabecera HTML para Excel (opcional pero recomendable para una mejor compatibilidad)
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>Citas</x:Name>");
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                // Son 4 columnas (Fecha, Cliente, Mascota, Empleado)
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='4' align='center'><b>REPORTE DE CITAS</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='4' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='4' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>");
+                sb.Append("<br>"); // Salto de línea para separar el encabezado de la tabla de datos
+
+                // Crear la tabla HTML para los datos
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Añadir fila de encabezados
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                sb.Append("<th>Fecha</th>");
+                sb.Append("<th>Cliente</th>");
+                sb.Append("<th>Mascota</th>");
+                sb.Append("<th>Empleado</th>");
+                sb.Append("</tr>");
+
+                // Añadir filas de datos
+                foreach (DataRow row in dtCitas.Rows)
+                {
+                    sb.Append("<tr>");
+                    // Formatear la fecha para que se vea bien en Excel
+                    sb.Append("<td>" + HttpUtility.HtmlEncode(Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy HH:mm")) + "</td>");
+                    sb.Append("<td>" + HttpUtility.HtmlEncode(row["NombreCliente"].ToString()) + "</td>");
+                    sb.Append("<td>" + HttpUtility.HtmlEncode(row["NombreMascota"].ToString()) + "</td>");
+                    sb.Append("<td>" + HttpUtility.HtmlEncode(row["NombreEmpleado"].ToString()) + "</td>");
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+                sb.Append("</body></html>");
+
+                // Escribir el contenido en el flujo de respuesta
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
             }
         }
     }

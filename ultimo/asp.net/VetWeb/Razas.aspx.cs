@@ -2,10 +2,11 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text.RegularExpressions; // Important: You need this line for Regex!
-using System.Web.UI; // Required for ScriptManager to call client-side scripts
+using System.Text; // Necesario para StringBuilder
+using System.Text.RegularExpressions;
+using System.Web; // Necesario para Server.HtmlEncode
+using System.Web.UI;
 using System.Web.UI.WebControls;
-
 namespace VetWeb
 {
     public partial class Razas : System.Web.UI.Page
@@ -434,6 +435,109 @@ namespace VetWeb
         {
             txtBuscarNombreRaza.Text = ""; // Clear the search textbox
             CargarRazas(); // Reload all breeds without a filter
+        }
+
+        protected void btnExportarExcel_Click(object sender, EventArgs e)
+        {
+            DataTable dtRazas = new DataTable();
+            string filtroAplicado = string.IsNullOrEmpty(txtBuscarNombreRaza.Text.Trim()) ? "Ninguno" : txtBuscarNombreRaza.Text.Trim();
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                // Obtener los datos de las razas y sus especies (aplicando el filtro de búsqueda actual si lo hay)
+                string query = "SELECT R.NombreRaza, E.NombreEspecie FROM Razas R INNER JOIN Especies E ON R.EspecieID = E.EspecieID";
+
+                if (!string.IsNullOrEmpty(txtBuscarNombreRaza.Text.Trim()))
+                {
+                    query += " WHERE R.NombreRaza LIKE '%' + @SearchTerm + '%'";
+                }
+                query += " ORDER BY E.NombreEspecie, R.NombreRaza"; // Ordenar para una visualización consistente
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                if (!string.IsNullOrEmpty(txtBuscarNombreRaza.Text.Trim()))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", txtBuscarNombreRaza.Text.Trim());
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                try
+                {
+                    con.Open();
+                    da.Fill(dtRazas);
+                }
+                catch (Exception ex)
+                {
+                    MostrarMensaje("Error al cargar los datos para el Excel: " + ex.Message, false);
+                    return;
+                }
+            }
+
+            if (dtRazas.Rows.Count == 0)
+            {
+                MostrarMensaje("No hay datos de razas para generar el Excel con el filtro actual.", false);
+                return;
+            }
+
+            try
+            {
+                // Configurar la respuesta para descargar un archivo Excel
+                Response.Clear();
+                Response.Buffer = true;
+                Response.ContentType = "application/vnd.ms-excel"; // MIME type para Excel 97-2003
+                Response.AddHeader("Content-Disposition", "attachment;filename=ReporteRazas_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xls");
+                Response.Charset = "UTF-8";
+                Response.ContentEncoding = System.Text.Encoding.UTF8;
+                Response.BinaryWrite(System.Text.Encoding.UTF8.GetPreamble()); // Para UTF-8 con BOM
+
+                // Usar StringBuilder para construir el contenido HTML de la tabla
+                StringBuilder sb = new StringBuilder();
+
+                // Cabecera HTML para Excel (opcional pero recomendable para una mejor compatibilidad)
+                sb.Append("<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.Append("<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>");
+                sb.Append("<x:Name>Razas</x:Name>");
+                sb.Append("<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>");
+                sb.Append("</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>");
+                sb.Append("<body>");
+
+                // Título del reporte en el Excel
+                // Son 2 columnas (NombreRaza, NombreEspecie)
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 14pt;'><tr><td colspan='2' align='center'><b>REPORTE DE RAZAS</b></td></tr></table>");
+                sb.Append("<table border='0' style='font-family: Arial; font-size: 10pt;'><tr><td colspan='2' align='left'>Fecha de Generación: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</td></tr>");
+                sb.Append("<tr><td colspan='2' align='left'>Filtro Aplicado: \"" + filtroAplicado + "\"</td></tr></table>");
+                sb.Append("<br>"); // Salto de línea para separar el encabezado de la tabla de datos
+
+                // Crear la tabla HTML para los datos
+                sb.Append("<table border='1px' cellpadding='0' cellspacing='0' style='border-collapse: collapse; font-family: Arial; font-size: 10pt;'>");
+
+                // Añadir fila de encabezados
+                sb.Append("<tr style='background-color:#36506A; color:#FFFFFF;'>");
+                sb.Append("<th>Nombre de Raza</th>");
+                sb.Append("<th>Especie</th>");
+                sb.Append("</tr>");
+
+                // Añadir filas de datos
+                foreach (DataRow row in dtRazas.Rows)
+                {
+                    sb.Append("<tr>");
+                    sb.Append("<td>" + HttpUtility.HtmlEncode(row["NombreRaza"].ToString()) + "</td>");
+                    sb.Append("<td>" + HttpUtility.HtmlEncode(row["NombreEspecie"].ToString()) + "</td>");
+                    sb.Append("</tr>");
+                }
+
+                sb.Append("</table>");
+                sb.Append("</body></html>");
+
+                // Escribir el contenido en el flujo de respuesta
+                Response.Write(sb.ToString());
+                Response.Flush();
+                Response.End();
+
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Error al generar el archivo Excel: " + ex.Message, false);
+            }
         }
     }
 }
