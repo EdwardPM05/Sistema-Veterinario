@@ -446,10 +446,6 @@
             <i class="bi bi-file-earmark-pdf me-2"></i> Reporte PDF
         </asp:LinkButton>
 
-        <asp:LinkButton ID="btnExportarExcel" runat="server" CssClass="btn btn-light"  ToolTip="Exportar a Excel"
-            Style="padding: 0.5rem 1rem; width: auto; height: auto; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dee2e6; min-width: 45px;">
-            <img src="<%= ResolveUrl("~/Assets/Images/excel.png") %>" alt="Excel" style="width: 28px; height: 28px; margin: 0; padding: 0;" />
-        </asp:LinkButton>
     </div>
 </div>
 
