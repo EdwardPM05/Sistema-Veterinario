@@ -686,14 +686,15 @@
                 enableTime: false,
                 dateFormat: "Y-m-d", // Formato de fecha para la base de datos
                 altInput: true, // Muestra un campo de entrada alternativo formateado para el usuario
-                altFormat: "d F Y", // Formato amigable para el usuario (ej. "05 Junio 2025")
+                altFormat: "d F Y", // Formato amigable para el usuario (ej. "05 Julio 2025")
                 locale: "es", // Establecer el idioma a español
+                minDate: "today", // ¡ESTA ES LA CLAVE! No permite seleccionar fechas anteriores a hoy.
                 // Habilitar el autopostback para el ddlClientes al cambiar la fecha
                 onChange: function (selectedDates, dateStr, instance) {
                     // Puedes agregar lógica aquí si es necesario al cambiar la fecha.
                     // Para ddlClientes_SelectedIndexChanged, el AutoPostBack ya lo maneja.
                 }
-            });
+            }); 
 
             // JavaScript for handling the sidebar toggle on mobile
             document.addEventListener('DOMContentLoaded', function () {

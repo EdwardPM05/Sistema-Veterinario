@@ -607,8 +607,6 @@
                 <Columns>
                     <%-- Las columnas se muestran en el orden que se definen aquí --%>
                     <asp:BoundField DataField="NombreServicio" HeaderText="Servicio" />
-                    <asp:BoundField DataField="Cantidad" HeaderText="Cantidad" />
-                    <asp:BoundField DataField="PrecioUnitario" HeaderText="Precio Unitario" DataFormatString="{0:C}" />
                     <asp:BoundField DataField="TotalServicio" HeaderText="Subtotal" DataFormatString="{0:C}" />
                     <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="80px">
                         <ItemTemplate>
@@ -658,21 +656,15 @@
                                 <%-- Los servicios se cargarán desde el code-behind --%>
                             </asp:DropDownList>
                         </div>
-                        <div class="mb-3">
-                            <label for="txtCantidad" class="form-label">Cantidad</label>
-                            <asp:TextBox ID="txtCantidad" runat="server" CssClass="form-control" TextMode="Number" OnTextChanged="txtCantidad_TextChanged" AutoPostBack="True" />
-                        </div>
                         
                         <!-- Información de Precio y Subtotal -->
                         <div class="mb-3">
-                            <label class="calculation-label">Precio Unitario Actual: <asp:Label ID="lblPrecioUnitarioActual" runat="server" Text="S/ 0.00"></asp:Label></label>
                             <label class="calculation-label">Subtotal para este Servicio: <asp:Label ID="lblSubtotalServicio" runat="server" Text="S/ 0.00"></asp:Label></label>
                         </div>
 
                         <!-- Campo oculto para almacenar el ID de CitaServicio al editar -->
                         <asp:HiddenField ID="hfCitaServicioID" runat="server" />
                         <!-- Campo oculto para almacenar el PrecioUnitario original del servicio al editar/agregar -->
-                        <asp:HiddenField ID="hfPrecioUnitarioGuardado" runat="server" />
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -734,11 +726,8 @@
             // Función JavaScript para limpiar los campos del formulario del modal y establecer el modo "Agregar"
             function clearModalFormAndSetAddModeCitaServicio() {
                 var ddlServicios = document.getElementById('<%= ddlServicios.ClientID %>');
-                var txtCantidad = document.getElementById('<%= txtCantidad.ClientID %>');
-                var lblPrecioUnitarioActual = document.getElementById('<%= lblPrecioUnitarioActual.ClientID %>');
                 var lblSubtotalServicio = document.getElementById('<%= lblSubtotalServicio.ClientID %>');
                 var hfCitaServicioID = document.getElementById('<%= hfCitaServicioID.ClientID %>');
-                var hfPrecioUnitarioGuardado = document.getElementById('<%= hfPrecioUnitarioGuardado.ClientID %>');
                 var lblMensaje = document.getElementById('<%= lblMensaje.ClientID %>');
                 var btnAgregar = document.getElementById('<%= btnAgregar.ClientID %>');
                 var btnActualizar = document.getElementById('<%= btnActualizar.ClientID %>');
@@ -746,11 +735,8 @@
 
                 // Restablecer los valores
                 if (ddlServicios) ddlServicios.selectedIndex = 0;
-                if (txtCantidad) txtCantidad.value = '';
-                if (lblPrecioUnitarioActual) lblPrecioUnitarioActual.innerText = 'S/ 0.00';
                 if (lblSubtotalServicio) lblSubtotalServicio.innerText = 'S/ 0.00';
                 if (hfCitaServicioID) hfCitaServicioID.value = '';
-                if (hfPrecioUnitarioGuardado) hfPrecioUnitarioGuardado.value = '';
 
                 // Limpiar el mensaje y sus clases para que no ocupe espacio
                 if (lblMensaje) {
