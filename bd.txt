@@ -103,9 +103,6 @@ CREATE TABLE CitaServicios (
     CitaServicioID INT PRIMARY KEY IDENTITY(1,1),
     CitaID INT NOT NULL,
     ServicioID INT NOT NULL,
-    Cantidad INT NOT NULL CHECK (Cantidad > 0),
-    PrecioUnitario DECIMAL(10, 2) NOT NULL, -- Columna para guardar el precio del servicio en el momento de la transacción
-    -- TotalServicio AS (Cantidad * PrecioUnitario) PERSISTED, -- Opcional: Columna calculada si tu SQL Server lo permite y la necesitas persistida
     FOREIGN KEY (CitaID) REFERENCES Citas(CitaID),
     FOREIGN KEY (ServicioID) REFERENCES Servicios(ServicioID)
 );
