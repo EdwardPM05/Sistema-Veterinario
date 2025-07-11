@@ -103,9 +103,6 @@ CREATE TABLE CitaServicios (
     CitaServicioID INT PRIMARY KEY IDENTITY(1,1),
     CitaID INT NOT NULL,
     ServicioID INT NOT NULL,
-    Cantidad INT NOT NULL CHECK (Cantidad > 0),
-    PrecioUnitario DECIMAL(10, 2) NOT NULL, -- Columna para guardar el precio del servicio en el momento de la transacción
-    -- TotalServicio AS (Cantidad * PrecioUnitario) PERSISTED, -- Opcional: Columna calculada si tu SQL Server lo permite y la necesitas persistida
     FOREIGN KEY (CitaID) REFERENCES Citas(CitaID),
     FOREIGN KEY (ServicioID) REFERENCES Servicios(ServicioID)
 );
@@ -114,7 +111,7 @@ SELECT name
 FROM sys.check_constraints
 WHERE parent_object_id = OBJECT_ID('dbo.Mascotas') AND col_name(parent_object_id, parent_column_id) = 'Sexo';
 
--- Reemplaza [NombreDeLaRestriccion] con el nombre real que obtuviste.
+
 ALTER TABLE Mascotas
 DROP CONSTRAINT CK__Mascotas__Sexo__52593CB8;
 
