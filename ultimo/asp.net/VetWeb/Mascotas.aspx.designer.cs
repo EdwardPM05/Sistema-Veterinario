@@ -123,6 +123,24 @@ namespace VetWeb
         protected global::System.Web.UI.WebControls.DropDownList ddlClientes;
 
         /// <summary>
+        /// Control ddlEspecies.
+        /// </summary>
+        /// <remarks>
+        /// Campo generado automáticamente.
+        /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlEspecies;
+
+        /// <summary>
+        /// Control rfvEspecies.
+        /// </summary>
+        /// <remarks>
+        /// Campo generado automáticamente.
+        /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvEspecies;
+
+        /// <summary>
         /// Control ddlRazas.
         /// </summary>
         /// <remarks>
@@ -130,6 +148,15 @@ namespace VetWeb
         /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
         /// </remarks>
         protected global::System.Web.UI.WebControls.DropDownList ddlRazas;
+
+        /// <summary>
+        /// Control rfvRazas.
+        /// </summary>
+        /// <remarks>
+        /// Campo generado automáticamente.
+        /// Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvRazas;
 
         /// <summary>
         /// Control hfMascotaID.

@@ -16,6 +16,14 @@
     <!-- Bootstrap Icons CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 <style>
+
+        @font-face {
+            font-family: 'Flexo Soft Demi';
+            src: url('<%= ResolveUrl("~/Assets/Fonts/FlexoSoftDemi.woff") %>') format('woff');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
     /* Global box-sizing for consistent layout */
     html, body {
         box-sizing: border-box;
@@ -74,12 +82,12 @@
 
     body {
         min-height: 100vh;
-        overflow-x: hidden; /* Prevent horizontal scroll for the entire body */
-        font-family: 'Inter', sans-serif; /* Asumiendo que 'Inter' está disponible o se importa */
+        overflow-x: hidden;
+        font-family: 'Flexo Soft Demi', 'Inter', sans-serif;
         background-color: var(--body-bg);
         color: var(--text-color);
         transition: background-color 0.3s, color 0.3s;
-        padding-left: 220px; /* Space for fixed sidebar on desktop */
+        padding-left: 220px;
     }
     
     /* Sidebar styling for desktop/tablet */

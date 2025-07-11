@@ -1,13 +1,13 @@
-﻿using iTextSharp.text; // Necesario para iTextSharp
-using iTextSharp.text.pdf; // Necesario para iTextSharp
+﻿using iTextSharp.text;
+using iTextSharp.text.pdf;
 using System;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.IO; // Necesario para MemoryStream
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web; // Necesario para HttpResponse
+using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Text;
@@ -26,7 +26,8 @@ namespace VetWeb
             {
                 // Cargar los DropDownLists solo una vez al inicio
                 CargarClientes();
-                CargarRazas();
+                CargarEspecies(); // <--- NUEVO: Cargar las especies al inicio
+                // CargarRazas(); // <--- COMENTADO: Las razas ahora se cargarán por especie
                 CargarSexo();
                 CargarMascotas();
                 // Estado inicial de los botones del modal (modo agregar)
@@ -56,33 +57,93 @@ namespace VetWeb
         }
 
         /// <summary>
-        /// Carga las razas desde la base de datos y las llena en el DropDownList de Razas.
+        /// <summary>
+        /// Carga las especies desde la base de datos y las llena en el DropDownList de Especies.
         /// </summary>
-        private void CargarRazas()
+        private void CargarEspecies()
         {
             using (SqlConnection con = new SqlConnection(cadena))
             {
-                SqlDataAdapter da = new SqlDataAdapter("SELECT RazaID, NombreRaza FROM Razas ORDER BY NombreRaza", con);
+                SqlDataAdapter da = new SqlDataAdapter("SELECT EspecieID, NombreEspecie FROM Especies ORDER BY NombreEspecie", con);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-                ddlRazas.DataSource = dt;
-                ddlRazas.DataTextField = "NombreRaza";
-                ddlRazas.DataValueField = "RazaID";
-                ddlRazas.DataBind();
-                ddlRazas.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una raza", ""));
+                ddlEspecies.DataSource = dt;
+                ddlEspecies.DataTextField = "NombreEspecie";
+                ddlEspecies.DataValueField = "EspecieID";
+                ddlEspecies.DataBind();
+                ddlEspecies.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una especie", ""));
             }
         }
 
         /// <summary>
+        /// Carga las razas desde la base de datos y las llena en el DropDownList de Razas,
+        /// opcionalmente filtrando por EspecieID.
+        /// </summary>
+        /// <param name="especieID">El ID de la especie para filtrar las razas. Si es 0 o nulo, carga todas.</param>
+        private void CargarRazas(int especieID = 0)
+        {
+            ddlRazas.Items.Clear(); // Limpiar antes de cargar
+            ddlRazas.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione una raza", ""));
+
+            if (especieID <= 0) // Si no se selecciona una especie válida, solo dejamos la opción por defecto
+            {
+                ddlRazas.Enabled = false; // Deshabilitar hasta que se seleccione una especie
+                return;
+            }
+
+            ddlRazas.Enabled = true; // Habilitar el ddlRazas
+
+            using (SqlConnection con = new SqlConnection(cadena))
+            {
+                string query = "SELECT RazaID, NombreRaza FROM Razas WHERE EspecieID = @EspecieID ORDER BY NombreRaza";
+                SqlDataAdapter da = new SqlDataAdapter(query, con);
+                da.SelectCommand.Parameters.AddWithValue("@EspecieID", especieID);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                ddlRazas.DataSource = dt;
+                ddlRazas.DataTextField = "NombreRaza";
+                ddlRazas.DataValueField = "RazaID";
+                ddlRazas.DataBind();
+
+                if (dt.Rows.Count == 0)
+                {
+                    ddlRazas.Items.Add(new System.Web.UI.WebControls.ListItem("No hay razas para esta especie", ""));
+                    ddlRazas.Enabled = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Evento que se dispara cuando se selecciona una nueva especie.
+        /// Carga las razas asociadas a la especie seleccionada.
+        /// </summary>
+        protected void ddlEspecies_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int especieId;
+            if (int.TryParse(ddlEspecies.SelectedValue, out especieId))
+            {
+                CargarRazas(especieId);
+            }
+            else
+            {
+                // Si no se selecciona una especie válida, limpiar y deshabilitar razas
+                CargarRazas(0);
+            }
+            // Mantiene el modal abierto después del postback
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "ShowMascotaModalAfterPostBack", "showMascotaModal();", true);
+        }
+
+
+        /// <summary>
         /// Carga las opciones de Sexo en el DropDownList de Sexo.
-        /// CAMBIO CLAVE AQUÍ: 'Hembra' ahora tiene el valor 'H'.
         /// </summary>
         private void CargarSexo()
         {
-            ddlSexo.Items.Clear(); // Limpiar antes de añadir para evitar duplicados si se llama más de una vez por error
+            ddlSexo.Items.Clear();
             ddlSexo.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Seleccione el sexo", ""));
             ddlSexo.Items.Add(new System.Web.UI.WebControls.ListItem("Macho", "M"));
-            ddlSexo.Items.Add(new System.Web.UI.WebControls.ListItem("Hembra", "H")); // <-- CAMBIO DE 'F' A 'H'
+            ddlSexo.Items.Add(new System.Web.UI.WebControls.ListItem("Hembra", "H"));
         }
 
         /// <summary>
@@ -100,22 +161,26 @@ namespace VetWeb
                         M.Nombre, 
                         M.Edad, 
                         M.Sexo, 
-                        M.ClienteID,  -- Incluir ClienteID para DataKeys
+                        M.ClienteID, 
                         C.PrimerNombre + ' ' + C.ApellidoPaterno AS NombreCliente, 
-                        M.RazaID,     -- Incluir RazaID para DataKeys
-                        R.NombreRaza 
+                        M.RazaID, 
+                        R.NombreRaza,
+                        R.EspecieID, -- <--- NUEVO: Incluir EspecieID para la edición
+                        E.NombreEspecie -- <--- NUEVO: Incluir NombreEspecie para la edición y visualización
                     FROM Mascotas M
                     INNER JOIN Clientes C ON M.ClienteID = C.ClienteID
-                    INNER JOIN Razas R ON M.RazaID = R.RazaID";
+                    INNER JOIN Razas R ON M.RazaID = R.RazaID
+                    INNER JOIN Especies E ON R.EspecieID = E.EspecieID"; // <--- NUEVO: JOIN con Especies
 
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
                     query += " WHERE M.Nombre LIKE '%' + @SearchTerm + '%' " +
                              "OR C.PrimerNombre LIKE '%' + @SearchTerm + '%' " +
                              "OR C.ApellidoPaterno LIKE '%' + @SearchTerm + '%' " +
-                             "OR R.NombreRaza LIKE '%' + @SearchTerm + '%'";
+                             "OR R.NombreRaza LIKE '%' + @SearchTerm + '%' " +
+                             "OR E.NombreEspecie LIKE '%' + @SearchTerm + '%'"; // <--- NUEVO: Buscar también por especie
                 }
-                query += " ORDER BY M.Nombre"; // Ordenar para una visualización consistente
+                query += " ORDER BY M.Nombre";
 
                 SqlCommand cmd = new SqlCommand(query, con);
 
@@ -138,7 +203,12 @@ namespace VetWeb
         /// </summary>
         protected void btnAgregar_Click(object sender, EventArgs e)
         {
-            if (!ValidarFormulario()) return;
+            if (!ValidarFormulario())
+            {
+                // Si la validación falla, asegurar que el modal permanezca abierto
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "ShowModalOnError", "showMascotaModal();", true);
+                return;
+            }
 
             bool successOperation = false;
             using (SqlConnection con = new SqlConnection(cadena))
@@ -147,7 +217,7 @@ namespace VetWeb
                 SqlCommand cmd = new SqlCommand(query, con);
                 cmd.Parameters.AddWithValue("@Nombre", txtNombreMascota.Text.Trim());
                 cmd.Parameters.AddWithValue("@Edad", Convert.ToInt32(txtEdad.Text.Trim()));
-                cmd.Parameters.AddWithValue("@Sexo", ddlSexo.SelectedValue); // Aquí se usa 'M' o 'H'
+                cmd.Parameters.AddWithValue("@Sexo", ddlSexo.SelectedValue);
                 cmd.Parameters.AddWithValue("@ClienteID", Convert.ToInt32(ddlClientes.SelectedValue));
                 cmd.Parameters.AddWithValue("@RazaID", Convert.ToInt32(ddlRazas.SelectedValue));
 
@@ -160,7 +230,7 @@ namespace VetWeb
                 }
                 catch (SqlException ex)
                 {
-                    if (ex.Number == 2627) // Violación de restricción UNIQUE (si la hubiera, por ejemplo, Nombre + ClienteID)
+                    if (ex.Number == 2627)
                     {
                         MostrarMensaje("Error: Ya existe una mascota con el mismo nombre para este cliente. Por favor, verifique.", false);
                     }
@@ -187,13 +257,18 @@ namespace VetWeb
             {
                 LimpiarFormulario();
                 CargarMascotas();
-                // El modal se ocultará automáticamente a través de MostrarMensaje()
             }
             else
             {
-                // Si hay un error, el modal permanece abierto y los datos se conservan.
-                CargarMascotas(txtBuscarNombreMascota.Text.Trim()); // Refrescar el grid con el filtro actual
-                // El modal se mantendrá abierto a través de MostrarMensaje()
+                CargarMascotas(txtBuscarNombreMascota.Text.Trim());
+                // Importante: Si hubo un error en el servidor (ej. duplicado),
+                // y el formulario permanece abierto, necesitamos recargar las razas
+                // si se había seleccionado una especie.
+                int especieIdSelected;
+                if (int.TryParse(ddlEspecies.SelectedValue, out especieIdSelected))
+                {
+                    CargarRazas(especieIdSelected);
+                }
             }
         }
 
@@ -203,7 +278,12 @@ namespace VetWeb
         /// </summary>
         protected void btnActualizar_Click(object sender, EventArgs e)
         {
-            if (!ValidarFormulario()) return;
+            if (!ValidarFormulario())
+            {
+                // Si la validación falla, asegurar que el modal permanezca abierto
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "ShowModalOnError", "showMascotaModal();", true);
+                return;
+            }
 
             int mascotaID;
             if (!int.TryParse(hfMascotaID.Value, out mascotaID))
@@ -219,7 +299,7 @@ namespace VetWeb
                 SqlCommand cmd = new SqlCommand(query, con);
                 cmd.Parameters.AddWithValue("@Nombre", txtNombreMascota.Text.Trim());
                 cmd.Parameters.AddWithValue("@Edad", Convert.ToInt32(txtEdad.Text.Trim()));
-                cmd.Parameters.AddWithValue("@Sexo", ddlSexo.SelectedValue); // Aquí se usa 'M' o 'H'
+                cmd.Parameters.AddWithValue("@Sexo", ddlSexo.SelectedValue);
                 cmd.Parameters.AddWithValue("@ClienteID", Convert.ToInt32(ddlClientes.SelectedValue));
                 cmd.Parameters.AddWithValue("@RazaID", Convert.ToInt32(ddlRazas.SelectedValue));
                 cmd.Parameters.AddWithValue("@MascotaID", mascotaID);
@@ -240,7 +320,7 @@ namespace VetWeb
                 }
                 catch (SqlException ex)
                 {
-                    if (ex.Number == 2627) // Violación de restricción UNIQUE (si la hubiera)
+                    if (ex.Number == 2627)
                     {
                         MostrarMensaje("Error: Ya existe una mascota con el mismo nombre para este cliente. Por favor, verifique.", false);
                     }
@@ -267,13 +347,18 @@ namespace VetWeb
             {
                 LimpiarFormulario();
                 CargarMascotas();
-                // El modal se ocultará automáticamente a través de MostrarMensaje()
             }
             else
             {
-                // Si hay un error, el modal permanece abierto y los datos se conservan.
-                CargarMascotas(txtBuscarNombreMascota.Text.Trim()); // Refrescar el grid con el filtro actual
-                // El modal se mantendrá abierto a través de MostrarMensaje()
+                CargarMascotas(txtBuscarNombreMascota.Text.Trim());
+                // Importante: Si hubo un error en el servidor,
+                // y el formulario permanece abierto, necesitamos recargar las razas
+                // si se había seleccionado una especie.
+                int especieIdSelected;
+                if (int.TryParse(ddlEspecies.SelectedValue, out especieIdSelected))
+                {
+                    CargarRazas(especieIdSelected);
+                }
             }
         }
 
@@ -284,29 +369,27 @@ namespace VetWeb
         {
             int index = Convert.ToInt32(e.CommandArgument);
 
-            // Obtener MascotaID, ClienteID, RazaID y Sexo usando DataKeys para robustez
             if (gvMascotas.DataKeys == null || index < 0 || index >= gvMascotas.DataKeys.Count)
             {
                 MostrarMensaje("Error interno: No se pudo obtener el ID de la mascota. Por favor, recargue la página.", false);
                 return;
             }
-            // Accede a los IDs directamente desde DataKeys por su nombre de campo
+
             int mascotaID = Convert.ToInt32(gvMascotas.DataKeys[index]["MascotaID"]);
             int clienteID = Convert.ToInt32(gvMascotas.DataKeys[index]["ClienteID"]);
             int razaID = Convert.ToInt32(gvMascotas.DataKeys[index]["RazaID"]);
-            string sexoValue = gvMascotas.DataKeys[index]["Sexo"].ToString(); // OBTENER SEXO DIRECTAMENTE DE DATAKEYS
+            string sexoValue = gvMascotas.DataKeys[index]["Sexo"].ToString();
+            // <--- NUEVO: Obtener EspecieID desde DataKeys
+            int especieID = Convert.ToInt32(gvMascotas.DataKeys[index]["EspecieID"]);
 
             GridViewRow row = gvMascotas.Rows[index];
 
             if (e.CommandName == "Editar")
             {
-                // Los índices de celdas corresponden al orden de las BoundFields VISIBLES en el ASPX:
-                // [0] = Nombre, [1] = Edad, [2] = Sexo (Display Text), [3] = NombreCliente, [4] = NombreRaza
                 txtNombreMascota.Text = row.Cells[0].Text.Trim();
                 txtEdad.Text = row.Cells[1].Text.Trim();
 
-                // Seleccionar el Sexo correcto usando el valor de DataKeys (más robusto que la celda de texto)
-                ddlSexo.ClearSelection(); // Limpiar antes de seleccionar
+                ddlSexo.ClearSelection();
                 try
                 {
                     System.Web.UI.WebControls.ListItem sexoItem = ddlSexo.Items.FindByValue(sexoValue);
@@ -316,7 +399,6 @@ namespace VetWeb
                     }
                     else
                     {
-                        // Si el valor no se encuentra (dato inconsistente en DB), selecciona la opción por defecto.
                         ddlSexo.Items.FindByValue("").Selected = true;
                         MostrarMensaje("Advertencia: El valor del sexo no se pudo cargar correctamente. Seleccione uno nuevo.", false);
                     }
@@ -327,57 +409,53 @@ namespace VetWeb
                     MostrarMensaje("Advertencia: Error al cargar el sexo. Seleccione uno nuevo.", false);
                 }
 
-                // Seleccionar el Cliente y Raza correctos usando los IDs obtenidos de DataKeys (más robusto)
                 try
                 {
                     ddlClientes.SelectedValue = clienteID.ToString();
                 }
                 catch (Exception)
                 {
-                    // Si el ClienteID no se encuentra (posiblemente cliente eliminado o un problema de datos),
-                    // selecciona la opción por defecto y muestra una advertencia.
                     ddlClientes.ClearSelection();
                     ddlClientes.Items.FindByValue("").Selected = true;
                     MostrarMensaje("Advertencia: El cliente asociado a esta mascota no se encontró. Por favor, seleccione uno nuevo.", false);
                 }
 
+                // <--- NUEVO: Seleccionar la especie primero, y luego cargar las razas
                 try
                 {
-                    ddlRazas.SelectedValue = razaID.ToString();
+                    ddlEspecies.SelectedValue = especieID.ToString();
+                    CargarRazas(especieID); // Cargar las razas de la especie seleccionada
+                    ddlRazas.SelectedValue = razaID.ToString(); // Luego seleccionar la raza específica
                 }
                 catch (Exception)
                 {
-                    // Si el RazaID no se encuentra (posiblemente raza eliminada o un problema de datos),
-                    // selecciona la opción por defecto y muestra una advertencia.
-                    ddlRazas.ClearSelection();
+                    ddlEspecies.ClearSelection();
+                    ddlEspecies.Items.FindByValue("").Selected = true;
+                    CargarRazas(0); // Limpiar y deshabilitar ddlRazas si la especie no se puede cargar
+                    ddlRazas.ClearSelection(); // Asegurar que raza también esté limpia
                     ddlRazas.Items.FindByValue("").Selected = true;
-                    MostrarMensaje("Advertencia: La raza asociada a esta mascota no se encontró. Por favor, seleccione una nueva.", false);
+                    MostrarMensaje("Advertencia: La especie o raza asociada a esta mascota no se encontró. Por favor, seleccione una nueva.", false);
                 }
+
 
                 hfMascotaID.Value = mascotaID.ToString();
 
-                // Cambia la visibilidad de los botones en el modal
                 btnAgregar.Style["display"] = "none";
                 btnActualizar.Style["display"] = "inline-block";
 
-                // Actualiza el título del modal antes de mostrarlo
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "SetMascotaModalTitle", "document.getElementById('mascotaModalLabel').innerText = 'Editar Mascota';", true);
 
-                // Limpia el mensaje si lo hubiera y luego muestra el modal.
-                // Esta llamada es crucial para que el modal se muestre.
-                MostrarMensaje("", false); // Llama a esta función que a su vez llama showMascotaModal()
+                MostrarMensaje("", false); // Esto mostrará el modal
             }
             else if (e.CommandName == "Eliminar")
             {
                 using (SqlConnection con = new SqlConnection(cadena))
                 {
                     con.Open();
-                    SqlTransaction transaction = con.BeginTransaction(); // Iniciar transacción
+                    SqlTransaction transaction = con.BeginTransaction();
 
                     try
                     {
-                        // **VALIDACIÓN DE DEPENDENCIAS ANTES DE ELIMINAR**
-                        // Verificar si hay citas asociadas a esta mascota
                         SqlCommand checkCmd = new SqlCommand("SELECT COUNT(*) FROM Citas WHERE MascotaID = @MascotaID", con, transaction);
                         checkCmd.Parameters.AddWithValue("@MascotaID", mascotaID);
                         int dependentCitas = (int)checkCmd.ExecuteScalar();
@@ -385,22 +463,21 @@ namespace VetWeb
                         if (dependentCitas > 0)
                         {
                             MostrarMensaje("No se puede eliminar la mascota porque tiene " + dependentCitas + " cita(s) programada(s). Reasigne o elimine las citas primero.", false);
-                            transaction.Rollback(); // Revertir si hay dependencias
-                            return; // Detener el proceso de eliminación
+                            transaction.Rollback();
+                            return;
                         }
 
-                        // Si no hay citas asociadas, proceder con la eliminación de la mascota
                         SqlCommand cmd = new SqlCommand("DELETE FROM Mascotas WHERE MascotaID = @MascotaID", con, transaction);
                         cmd.Parameters.AddWithValue("@MascotaID", mascotaID);
                         cmd.ExecuteNonQuery();
 
-                        transaction.Commit(); // Confirmar la transacción
+                        transaction.Commit();
                         MostrarMensaje("Mascota eliminada correctamente.", true);
                     }
                     catch (SqlException ex)
                     {
-                        transaction.Rollback(); // Revertir en caso de error
-                        if (ex.Number == 547) // Error de clave foránea
+                        transaction.Rollback();
+                        if (ex.Number == 547)
                         {
                             MostrarMensaje("No se pudo eliminar la mascota porque tiene registros asociados (ej. citas). Elimine los registros asociados primero.", false);
                         }
@@ -418,7 +495,7 @@ namespace VetWeb
                         con.Close();
                     }
                 }
-                CargarMascotas(); // Refrescar el GridView después de eliminar
+                CargarMascotas();
             }
         }
 
@@ -430,23 +507,26 @@ namespace VetWeb
             txtNombreMascota.Text = "";
             txtEdad.Text = "";
 
-            // Resetear DropDownLists a su primera opción ("Seleccione...")
             ddlSexo.ClearSelection();
             if (ddlSexo.Items.Count > 0) ddlSexo.Items.FindByValue("").Selected = true;
 
             ddlClientes.ClearSelection();
             if (ddlClientes.Items.Count > 0) ddlClientes.Items.FindByValue("").Selected = true;
 
+            // <--- NUEVO: Limpiar y resetear el dropdown de Especies
+            ddlEspecies.ClearSelection();
+            if (ddlEspecies.Items.Count > 0) ddlEspecies.Items.FindByValue("").Selected = true;
+
+            // <--- NUEVO: Limpiar y deshabilitar el dropdown de Razas
             ddlRazas.ClearSelection();
             if (ddlRazas.Items.Count > 0) ddlRazas.Items.FindByValue("").Selected = true;
+            ddlRazas.Enabled = false; // Deshabilitar hasta que se seleccione una especie
 
             hfMascotaID.Value = "";
             btnAgregar.Style["display"] = "inline-block";
             btnActualizar.Style["display"] = "none";
 
-            // También restablecer el título del modal y limpiar el mensaje
             ScriptManager.RegisterStartupScript(this, this.GetType(), "ResetMascotaModalTitle", "document.getElementById('mascotaModalLabel').innerText = 'Agregar Nueva Mascota';", true);
-            // Limpiar mensaje explícitamente sin invocar show/hide modal
             lblMensaje.Text = "";
             lblMensaje.CssClass = "";
         }
@@ -462,9 +542,10 @@ namespace VetWeb
                 string.IsNullOrWhiteSpace(txtEdad.Text) ||
                 string.IsNullOrEmpty(ddlSexo.SelectedValue) || ddlSexo.SelectedValue == "" ||
                 string.IsNullOrEmpty(ddlClientes.SelectedValue) || ddlClientes.SelectedValue == "" ||
+                string.IsNullOrEmpty(ddlEspecies.SelectedValue) || ddlEspecies.SelectedValue == "" || // <--- NUEVO: Validar Especie
                 string.IsNullOrEmpty(ddlRazas.SelectedValue) || ddlRazas.SelectedValue == "")
             {
-                MostrarMensaje("Por favor, complete todos los campos obligatorios: Nombre, Edad, Sexo, Cliente y Raza.", false);
+                MostrarMensaje("Por favor, complete todos los campos obligatorios: Nombre, Edad, Sexo, Cliente, Especie y Raza.", false);
                 return false;
             }
 
@@ -475,14 +556,12 @@ namespace VetWeb
                 return false;
             }
 
-            // Validar Edad (número entero válido y positivo)
             int edad;
-            if (!int.TryParse(txtEdad.Text.Trim(), out edad) || edad < 0)
+            if (!int.TryParse(txtEdad.Text.Trim(), out edad) || edad < 0 || edad > 180)
             {
-                MostrarMensaje("La edad debe ser un número entero válido y positivo.", false);
+                MostrarMensaje("La edad debe ser un número entero válido entre 0 y 180.", false);
                 return false;
             }
-            // Puedes añadir un límite de edad si es necesario (ej: edad < 200)
 
             return true;
         }
@@ -493,8 +572,52 @@ namespace VetWeb
         /// </summary>
         /// <param name="mensaje">El mensaje a mostrar.</param>
         /// <param name="exito">True para mensaje de éxito (alerta verde), false para error (alerta roja).</param>
+        private void MostrarMensaje(string mensaje, bool exito)
+        {
+            if (string.IsNullOrEmpty(mensaje))
+            {
+                lblMensaje.Text = "";
+                lblMensaje.CssClass = "";
+            }
+            else
+            {
+                lblMensaje.Text = mensaje;
+                lblMensaje.CssClass = exito ? "alert alert-success" : "alert alert-danger";
+            }
 
-        protected void btnImprimirPdf_Click(object sender, EventArgs e)
+            if (exito && !string.IsNullOrEmpty(mensaje))
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "HideMascotaModalOnSuccess", "hideMascotaModal();", true);
+            }
+            else
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "ShowMascotaModalGeneral", "showMascotaModal();", true);
+            }
+
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "ScrollToMessageMascota" + Guid.NewGuid().ToString(),
+                "var modalBody = document.querySelector('#mascotaModal .modal-body'); if(modalBody) modalBody.scrollTop = 0;", true);
+        }
+
+        /// <summary>
+        /// Maneja el evento de clic del botón de búsqueda.
+        /// Filtra la lista de mascotas basada en el término de búsqueda.
+        /// </summary>
+        protected void btnBuscarMascota_Click(object sender, EventArgs e)
+        {
+            CargarMascotas(txtBuscarNombreMascota.Text.Trim());
+        }
+
+        /// <summary>
+        /// Maneja el evento de clic del botón de limpiar búsqueda.
+        /// Limpia el término de búsqueda y recarga la lista completa de mascotas.
+        /// </summary>
+        protected void btnLimpiarBusquedaMascota_Click(object sender, EventArgs e)
+        {
+            txtBuscarNombreMascota.Text = "";
+            CargarMascotas();
+        }
+
+protected void btnImprimirPdf_Click(object sender, EventArgs e)
         {
             DataTable dtMascotas = new DataTable();
 
@@ -734,56 +857,6 @@ namespace VetWeb
                 }
             }
         }
-
-        private void MostrarMensaje(string mensaje, bool exito)
-        {
-            // Si el mensaje es vacío, no aplicar ninguna clase CSS ni texto para que no ocupe espacio.
-            if (string.IsNullOrEmpty(mensaje))
-            {
-                lblMensaje.Text = "";
-                lblMensaje.CssClass = "";
-            }
-            else
-            {
-                lblMensaje.Text = mensaje;
-                lblMensaje.CssClass = exito ? "alert alert-success" : "alert alert-danger";
-            }
-
-            // Si es un mensaje de éxito Y NO está vacío, ocultar el modal.
-            // En cualquier otro caso (mensaje de error, o mensaje vacío en modo de edición), mostrar el modal.
-            if (exito && !string.IsNullOrEmpty(mensaje))
-            {
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "HideMascotaModalOnSuccess", "hideMascotaModal();", true);
-            }
-            else // Esto cubre mensajes de error y la lógica de "editar" (donde el mensaje está vacío y exito es false)
-            {
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "ShowMascotaModalGeneral", "showMascotaModal();", true);
-            }
-
-            // Asegurar que el mensaje sea visible dentro del modal
-            ScriptManager.RegisterStartupScript(this, this.GetType(), "ScrollToMessageMascota" + Guid.NewGuid().ToString(),
-                "var modalBody = document.querySelector('#mascotaModal .modal-body'); if(modalBody) modalBody.scrollTop = 0;", true);
-        }
-
-        /// <summary>
-        /// Maneja el evento de clic del botón de búsqueda.
-        /// Filtra la lista de mascotas basada en el término de búsqueda.
-        /// </summary>
-        protected void btnBuscarMascota_Click(object sender, EventArgs e)
-        {
-            CargarMascotas(txtBuscarNombreMascota.Text.Trim());
-        }
-
-        /// <summary>
-        /// Maneja el evento de clic del botón de limpiar búsqueda.
-        /// Limpia el término de búsqueda y recarga la lista completa de mascotas.
-        /// </summary>
-        protected void btnLimpiarBusquedaMascota_Click(object sender, EventArgs e)
-        {
-            txtBuscarNombreMascota.Text = ""; // Limpiar el textbox de búsqueda
-            CargarMascotas(); // Recargar todas las mascotas sin filtro
-        }
-
         protected void btnExportarExcel_Click(object sender, EventArgs e)
         {
             DataTable dtMascotas = new DataTable();

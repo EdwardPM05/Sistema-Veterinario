@@ -161,31 +161,13 @@ INSERT INTO Citas (Fecha, MascotaID, EmpleadoID) VALUES
 -- Cita 1: Max (MascotaID 1) con Laura Gomez (EmpleadoID 2, Veterinario) - para hoy
 (GETDATE(), 1, 2),
 -- Cita 2: Luna (MascotaID 2) con Miguel Castro (EmpleadoID 3, Veterinario) - para mañana
-('2025-06-21 10:00:00', 2, 3),
+('2025-09-21 10:00:00', 2, 3),
 -- Cita 3: Coco (MascotaID 5) con Roberto Diaz (EmpleadoID 1, Administrador - si es válido para agendar citas)
-('2025-06-22 14:30:00', 5, 1),
+('2025-09-22 14:30:00', 5, 1),
 -- Cita 4: Daisy (MascotaID 4) con Laura Gomez (EmpleadoID 2, Veterinario)
-('2025-06-23 09:00:00', 4, 2),
+('2025-09-23 09:00:00', 4, 2),
 -- Cita 5: Toby (MascotaID 10) con Miguel Castro (EmpleadoID 3, Veterinario)
-('2025-06-24 16:00:00', 10, 3);
+('2025-09-24 16:00:00', 10, 3)
 
 
 
-INSERT INTO CitaServicios (CitaID, ServicioID, Cantidad, PrecioUnitario) VALUES
--- CitaID 1 (Max con Laura Gomez)
-(1, 1, 1, 45.00), -- Servicio: Consulta General (Precio: 45.00)
-
--- CitaID 2 (Luna con Miguel Castro) - Múltiples servicios
-(2, 1, 1, 45.00),  -- Servicio: Consulta General (Precio: 45.00)
-(2, 6, 1, 30.00),  -- Servicio: Vacunación Antirrábica (Precio: 30.00)
-
--- CitaID 3 (Coco con Roberto Diaz)
-(3, 2, 1, 70.00), -- Servicio: Diagnóstico por Imagen (Rayos X) (Precio: 70.00)
-
--- CitaID 4 (Daisy con Laura Gomez) - Múltiples servicios
-(4, 1, 1, 45.00),  -- Servicio: Consulta General (Precio: 45.00)
-(4, 9, 1, 35.00),  -- Servicio: Tratamiento Antiinflamatorio (Precio: 35.00)
-(4, 7, 2, 15.00),  -- Servicio: Administración de Medicamento Oral (Cantidad 2, Precio: 15.00 cada uno)
-
--- CitaID 5 (Toby con Miguel Castro)
-(5, 5, 1, 80.00); -- Servicio: Hospitalización (Día) (Precio: 80.00)

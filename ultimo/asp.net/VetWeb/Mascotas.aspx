@@ -425,256 +425,260 @@
             </ul>
         </nav>
 
-        <!-- Main Content Area -->
-        <div class="content">
+<div class="content">
 
+    <div class="input-group mb-3 search-input-group">
+        <asp:TextBox ID="txtBuscarNombreMascota" runat="server" CssClass="form-control" Placeholder="Buscar por nombre, cliente o raza" />
+        <asp:LinkButton ID="btnBuscarMascota" runat="server" OnClick="btnBuscarMascota_Click"
+            CssClass="btn btn-outline-secondary" 
+            ToolTip="Buscar">
+            <i class="bi bi-search fs-6"></i> 
+            <span class="sr-only"></span> 
+        </asp:LinkButton>
 
-            <!-- Barra de Búsqueda -->
-            <div class="input-group mb-3 search-input-group">
-                <asp:TextBox ID="txtBuscarNombreMascota" runat="server" CssClass="form-control" Placeholder="Buscar por nombre, cliente o raza" />
-                <asp:LinkButton ID="btnBuscarMascota" runat="server" OnClick="btnBuscarMascota_Click"
-                    CssClass="btn btn-outline-secondary" 
-                    ToolTip="Buscar">
-                    <i class="bi bi-search fs-6"></i> 
-                    <span class="sr-only"></span> 
-                </asp:LinkButton>
+        <asp:LinkButton ID="btnLimpiarBusquedaMascota" runat="server" OnClick="btnLimpiarBusquedaMascota_Click"
+            CssClass="btn btn-outline-secondary"
+            ToolTip="Limpiar">
+            <i class="bi bi-x-lg fs-6"></i> 
+            <span class="sr-only"></span> 
+        </asp:LinkButton>
+    </div>
 
-                <asp:LinkButton ID="btnLimpiarBusquedaMascota" runat="server" OnClick="btnLimpiarBusquedaMascota_Click"
-                    CssClass="btn btn-outline-secondary"
-                    ToolTip="Limpiar">
-                    <i class="bi bi-x-lg fs-6"></i> 
-                    <span class="sr-only"></span> 
-                </asp:LinkButton>
-            </div>
-
-
-            <!-- Botón para abrir el Modal de Añadir/Editar -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <button type="button" class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#mascotaModal" data-mode="add">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-2" viewBox="0 0 16 16">
-                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                    </svg>
-                    Agregar Nueva Mascota
-                </button>
-                <div>
-                <asp:LinkButton ID="btnImprimirPdfMascotas" runat="server" CssClass="btn btn-custom" OnClick="btnImprimirPdf_Click">
-                    <i class="bi bi-file-earmark-pdf me-2"></i> Reporte PDF
-                </asp:LinkButton>
-                <asp:LinkButton ID="btnExportarExcel" runat="server" CssClass="btn btn-light"  OnClick="btnExportarExcel_Click" ToolTip="Exportar a Excel"
-                    Style="padding: 0.5rem 1rem; width: auto; height: auto; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dee2e6; min-width: 45px;">
-                    <img src="<%= ResolveUrl("~/Assets/Images/excel.png") %>" alt="Excel" style="width: 28px; height: 28px; margin: 0; padding: 0;" />
-                </asp:LinkButton>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <button type="button" class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#mascotaModal" data-mode="add">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-2" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+            </svg>
+            Agregar Nueva Mascota
+        </button>
+        <div>
+        <asp:LinkButton ID="btnImprimirPdfMascotas" runat="server" CssClass="btn btn-custom" OnClick="btnImprimirPdf_Click">
+            <i class="bi bi-file-earmark-pdf me-2"></i> Reporte PDF
+        </asp:LinkButton>
+        <asp:LinkButton ID="btnExportarExcel" runat="server" CssClass="btn btn-light" OnClick="btnExportarExcel_Click" ToolTip="Exportar a Excel"
+            Style="padding: 0.5rem 1rem; width: auto; height: auto; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dee2e6; min-width: 45px;">
+            <img src="<%= ResolveUrl("~/Assets/Images/excel.png") %>" alt="Excel" style="width: 28px; height: 28px; margin: 0; padding: 0;" />
+        </asp:LinkButton>
+        </div>
+    </div>
     
+    <hr />
 
-            <hr />
+    <asp:GridView ID="gvMascotas" runat="server" AutoGenerateColumns="False" OnRowCommand="gvMascotas_RowCommand"
+        CssClass="table table-bordered table-striped table-hover"
+        DataKeyNames="MascotaID, ClienteID, RazaID, Sexo, EspecieID"> <%-- <--- AGREGADO: EspecieID --%>
+        <Columns>
+            <%-- Las columnas se muestran en el orden que se definen aquí --%>
+            <asp:BoundField DataField="Nombre" HeaderText="Nombre" />
+            <asp:BoundField DataField="Edad" HeaderText="Edad" />
+            <asp:BoundField DataField="Sexo" HeaderText="Sexo" />
+            <asp:BoundField DataField="NombreCliente" HeaderText="Cliente" />
+            <asp:BoundField DataField="NombreEspecie" HeaderText="Especie" /> <%-- <--- AGREGADO: Columna para Especie --%>
+            <asp:BoundField DataField="NombreRaza" HeaderText="Raza" />
+            <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="120px">
+                <ItemTemplate>
+                    <asp:LinkButton ID="btnEditarMascota" runat="server" CommandName="Editar"
+                        CssClass="icon-action icon-edit-custom ms-4 me-2"
+                        CommandArgument="<%# Container.DataItemIndex %>"
+                        ToolTip="Editar Mascota">
+                        <i class="bi bi-pencil fs-5"></i>
+                        <span class="sr-only"></span>
+                    </asp:LinkButton>
+                    
+                    <asp:LinkButton ID="btnEliminarMascota" runat="server" CommandName="Eliminar"
+                        CssClass="icon-action text-danger me-2"
+                        CommandArgument="<%# Container.DataItemIndex %>"
+                        OnClientClick="return confirm('¿Está seguro de que desea eliminar esta mascota?');"
+                        ToolTip="Eliminar Mascota">
+                        <i class="bi bi-trash fs-5"></i>
+                        <span class="sr-only"></span>
+                    </asp:LinkButton>
+                </ItemTemplate>
+            </asp:TemplateField>
+        </Columns>
+    </asp:GridView>
+</div>
 
-            <!-- GridView para mostrar las mascotas existentes -->
-            <asp:GridView ID="gvMascotas" runat="server" AutoGenerateColumns="False" OnRowCommand="gvMascotas_RowCommand"
-                CssClass="table  table-bordered table-striped table-hover"
-                DataKeyNames="MascotaID, ClienteID, RazaID, Sexo"> <%-- Ahora incluye Sexo para edición --%>
-                <Columns>
-                    <%-- Las columnas se muestran en el orden que se definen aquí --%>
-                    <asp:BoundField DataField="Nombre" HeaderText="Nombre" />
-                    <asp:BoundField DataField="Edad" HeaderText="Edad" />
-                    <asp:BoundField DataField="Sexo" HeaderText="Sexo" />
-                    <asp:BoundField DataField="NombreCliente" HeaderText="Cliente" />
-                    <asp:BoundField DataField="NombreRaza" HeaderText="Raza" />
-                    <asp:TemplateField HeaderText="Acciones" ItemStyle-Width="120px">
-                        <ItemTemplate>
-                            <asp:LinkButton ID="btnEditarMascota" runat="server" CommandName="Editar"
-                                CssClass="icon-action icon-edit-custom ms-4 me-2"
-                                CommandArgument="<%# Container.DataItemIndex %>"
-                                ToolTip="Editar Mascota">
-                                <i class="bi bi-pencil fs-5"></i>
-                                <span class="sr-only"></span>
-                            </asp:LinkButton>
+<div class="modal fade" id="mascotaModal" tabindex="-1" aria-labelledby="mascotaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mascotaModalLabel">Gestión de Mascota</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <asp:Label ID="lblMensaje" runat="server" EnableViewState="false"></asp:Label><br />
                 
-                            <asp:LinkButton ID="btnEliminarMascota" runat="server" CommandName="Eliminar"
-                                CssClass="icon-action text-danger me-2"
-                                CommandArgument="<%# Container.DataItemIndex %>"
-                                OnClientClick="return confirm('¿Está seguro de que desea eliminar esta mascota?');"
-                                ToolTip="Eliminar Mascota">
-                                <i class="bi bi-trash fs-5"></i>
-                                <span class="sr-only"></span>
-                            </asp:LinkButton>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                </Columns>
-            </asp:GridView>
-        </div>
-
-        <!-- Modal de Bootstrap para Añadir/Editar Mascota -->
-        <div class="modal fade" id="mascotaModal" tabindex="-1" aria-labelledby="mascotaModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="mascotaModalLabel">Gestión de Mascota</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Etiqueta para mensajes de validación/éxito/error -->
-                        <asp:Label ID="lblMensaje" runat="server" EnableViewState="false"></asp:Label><br />
-                        
-                        <!-- Campos de entrada del formulario -->
-                        <div class="mb-3">
-                            <label for="txtNombreMascota" class="form-label">Nombre de la Mascota</label>
-                            <asp:TextBox ID="txtNombreMascota" runat="server" CssClass="form-control" Placeholder="Nombre de la Mascota" />
-                        </div>
-                        <div class="mb-3">
-                            <label for="txtEdad" class="form-label">Edad</label>
-                            <asp:TextBox ID="txtEdad" runat="server" CssClass="form-control" Placeholder="Edad (en años)" TextMode="Number" />
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="ddlSexo" class="form-label">Sexo</label>
-                            <asp:DropDownList ID="ddlSexo" runat="server" CssClass="form-select">
-                                <%-- Los ítems de sexo se cargarán desde el code-behind --%>
-                            </asp:DropDownList>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="ddlClientes" class="form-label">Cliente</label>
-                            <asp:DropDownList ID="ddlClientes" runat="server" CssClass="form-select">
-                                <%-- Los clientes se cargarán desde el code-behind --%>
-                            </asp:DropDownList>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="ddlRazas" class="form-label">Raza</label>
-                            <asp:DropDownList ID="ddlRazas" runat="server" CssClass="form-select">
-                                <%-- Las razas se cargarán desde el code-behind --%>
-                            </asp:DropDownList>
-                        </div>
-                        
-                        <!-- Campo oculto para almacenar el ID de la mascota al editar -->
-                        <asp:HiddenField ID="hfMascotaID" runat="server" />
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <!-- Botones de Guardar (Agregar) y Actualizar -->
-                        <asp:Button ID="btnAgregar" runat="server" CssClass="btn btn-success" Text="Guardar" OnClick="btnAgregar_Click" />
-                        <asp:Button ID="btnActualizar" runat="server" CssClass="btn btn-primary" Text="Actualizar" OnClick="btnActualizar_Click" />
-                    </div>
+                <div class="mb-3">
+                    <label for="txtNombreMascota" class="form-label">Nombre de la Mascota</label>
+                    <asp:TextBox ID="txtNombreMascota" runat="server" CssClass="form-control" Placeholder="Nombre de la Mascota" />
                 </div>
+                <div class="mb-3">
+                    <label for="txtEdad" class="form-label">Edad</label>
+                    <asp:TextBox ID="txtEdad" runat="server" CssClass="form-control" Placeholder="Edad (en años)" TextMode="Number" />
+                </div>
+                
+                <div class="mb-3">
+                    <label for="ddlSexo" class="form-label">Sexo</label>
+                    <asp:DropDownList ID="ddlSexo" runat="server" CssClass="form-select">
+                        <%-- Los ítems de sexo se cargarán desde el code-behind --%>
+                    </asp:DropDownList>
+                </div>
+
+                <div class="mb-3">
+                    <label for="ddlClientes" class="form-label">Cliente</label>
+                    <asp:DropDownList ID="ddlClientes" runat="server" CssClass="form-select">
+                        <%-- Los clientes se cargarán desde el code-behind --%>
+                    </asp:DropDownList>
+                </div>
+
+                <div class="mb-3">
+                    <label for="ddlEspecies" class="form-label">Especie:</label>
+                    <asp:DropDownList ID="ddlEspecies" runat="server" CssClass="form-select" AutoPostBack="true" OnSelectedIndexChanged="ddlEspecies_SelectedIndexChanged">
+                        <asp:ListItem Text="Seleccione una especie" Value=""></asp:ListItem>
+                    </asp:DropDownList>
+                    <asp:RequiredFieldValidator ID="rfvEspecies" runat="server" ControlToValidate="ddlEspecies"
+                        InitialValue="" Text="* Seleccione una especie." CssClass="text-danger" Display="Dynamic">
+                    </asp:RequiredFieldValidator>
+                </div>
+                
+                <div class="mb-3"> <%-- <--- ESTE ES EL NUEVO BLOQUE PARA ddlRazas --%>
+                    <label for="ddlRazas" class="form-label">Raza:</label>
+                    <asp:DropDownList ID="ddlRazas" runat="server" CssClass="form-select">
+                        <asp:ListItem Text="Seleccione una raza" Value=""></asp:ListItem>
+                    </asp:DropDownList>
+                    <asp:RequiredFieldValidator ID="rfvRazas" runat="server" ControlToValidate="ddlRazas"
+                        InitialValue="" Text="* Seleccione una raza." CssClass="text-danger" Display="Dynamic">
+                    </asp:RequiredFieldValidator>
+                </div>
+
+
+                <asp:HiddenField ID="hfMascotaID" runat="server" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <asp:Button ID="btnAgregar" runat="server" CssClass="btn btn-success" Text="Guardar" OnClick="btnAgregar_Click" />
+                <asp:Button ID="btnActualizar" runat="server" CssClass="btn btn-primary" Text="Actualizar" OnClick="btnActualizar_Click" />
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- Archivos JavaScript de Bootstrap -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            // JavaScript for handling the sidebar toggle on mobile
-            document.addEventListener('DOMContentLoaded', function () {
-                var sidebarToggle = document.getElementById('sidebarToggle');
-                var sidebarMenu = document.getElementById('sidebarMenu');
-                var body = document.body;
-                var sidebarBackdrop = document.createElement('div');
-                sidebarBackdrop.className = 'sidebar-backdrop';
-                document.body.appendChild(sidebarBackdrop);
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // JavaScript for handling the sidebar toggle on mobile
+    document.addEventListener('DOMContentLoaded', function () {
+        var sidebarToggle = document.getElementById('sidebarToggle');
+        var sidebarMenu = document.getElementById('sidebarMenu');
+        var body = document.body;
+        var sidebarBackdrop = document.createElement('div');
+        sidebarBackdrop.className = 'sidebar-backdrop';
+        document.body.appendChild(sidebarBackdrop);
 
-                // Function to toggle sidebar
-                function toggleSidebar() {
-                    sidebarMenu.classList.toggle('show');
-                    sidebarBackdrop.classList.toggle('show');
-                    body.classList.toggle('overflow-hidden'); // Prevent body scroll
-                }
+        // Function to toggle sidebar
+        function toggleSidebar() {
+            sidebarMenu.classList.toggle('show');
+            sidebarBackdrop.classList.toggle('show');
+            body.classList.toggle('overflow-hidden'); // Prevent body scroll
+        }
 
-                if (sidebarToggle) {
-                    sidebarToggle.addEventListener('click', function () {
-                        toggleSidebar();
-                    });
-                }
-
-                if (sidebarBackdrop) {
-                    sidebarBackdrop.addEventListener('click', function () {
-                        toggleSidebar();
-                    });
-                }
-
-                // Close sidebar when a nav link is clicked on small screens
-                var navLinks = document.querySelectorAll('.sidebar .nav-link');
-                navLinks.forEach(function (link) {
-                    link.addEventListener('click', function () {
-                        if (window.innerWidth < 768) {
-                            // Check if it's a collapsible parent or a direct link
-                            var isCollapsibleParent = this.getAttribute('data-bs-toggle') === 'collapse';
-                            if (!isCollapsibleParent) {
-                                // Only close if it's not a parent of a collapsible menu
-                                toggleSidebar();
-                            }
-                        }
-                    });
-                });
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function () {
+                toggleSidebar();
             });
+        }
 
-            // Función JavaScript para limpiar los campos del formulario del modal y establecer el modo "Agregar"
-            function clearModalFormAndSetAddModeMascota() {
-                var txtNombreMascota = document.getElementById('<%= txtNombreMascota.ClientID %>');
-                var txtEdad = document.getElementById('<%= txtEdad.ClientID %>');
-                var ddlSexo = document.getElementById('<%= ddlSexo.ClientID %>');
-                var ddlClientes = document.getElementById('<%= ddlClientes.ClientID %>');
-                var ddlRazas = document.getElementById('<%= ddlRazas.ClientID %>');
-                var hfMascotaID = document.getElementById('<%= hfMascotaID.ClientID %>');
-                var lblMensaje = document.getElementById('<%= lblMensaje.ClientID %>');
-                var btnAgregar = document.getElementById('<%= btnAgregar.ClientID %>');
-                var btnActualizar = document.getElementById('<%= btnActualizar.ClientID %>');
-                var modalTitle = document.getElementById('mascotaModalLabel');
+        if (sidebarBackdrop) {
+            sidebarBackdrop.addEventListener('click', function () {
+                toggleSidebar();
+            });
+        }
 
-                if (txtNombreMascota) txtNombreMascota.value = '';
-                if (txtEdad) txtEdad.value = '';
-                // Restablecer los dropdowns a su primera opción ("Seleccione...")
-                if (ddlSexo) ddlSexo.selectedIndex = 0;
-                if (ddlClientes) ddlClientes.selectedIndex = 0;
-                if (ddlRazas) ddlRazas.selectedIndex = 0;
-                if (hfMascotaID) hfMascotaID.value = '';
-
-                // Limpiar el mensaje solo cuando se inicia explícitamente un nuevo proceso de 'agregar'
-                if (lblMensaje) {
-                    lblMensaje.innerHTML = '';
-                    lblMensaje.className = ''; // Esto eliminará la clase alert y cualquier clase de éxito/error
-                }
-
-                if (btnAgregar) btnAgregar.style.display = 'inline-block';
-                if (btnActualizar) btnActualizar.style.display = 'none';
-
-                if (modalTitle) modalTitle.innerText = 'Agregar Nueva Mascota';
-            }
-
-            // Función JavaScript para mostrar el modal de Mascota (llamada desde C#)
-            function showMascotaModal() {
-                var myModal = new bootstrap.Modal(document.getElementById('mascotaModal'));
-                myModal.show();
-            }
-
-            // Función JavaScript para ocultar el modal de Mascota (llamada desde C#)
-            function hideMascotaModal() {
-                var myModal = bootstrap.Modal.getInstance(document.getElementById('mascotaModal'));
-                if (myModal) {
-                    myModal.hide();
-                }
-            }
-
-            // Listener de evento para cuando el modal de Mascota se muestra (para manejar el reseteo en modo 'agregar')
-            document.addEventListener('DOMContentLoaded', function () {
-                var mascotaModal = document.getElementById('mascotaModal');
-                if (mascotaModal) {
-                    mascotaModal.addEventListener('shown.bs.modal', function (event) {
-                        var button = event.relatedTarget;
-                        // Solo limpiar si el modal fue activado por el botón 'Add New' (que tiene data-mode="add")
-                        if (button && button.getAttribute('data-mode') === 'add') {
-                            clearModalFormAndSetAddModeMascota();
-                        }
-                    });
-                    // Listener de evento para cuando el modal se oculta completamente
-                    mascotaModal.addEventListener('hidden.bs.modal', function () {
-                        // Resetear la visibilidad de los botones para la próxima vez que se abra el modal en modo 'agregar'
-                        clearModalFormAndSetAddModeMascota();
-                    });
+        // Close sidebar when a nav link is clicked on small screens
+        var navLinks = document.querySelectorAll('.sidebar .nav-link');
+        navLinks.forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth < 768) {
+                    // Check if it's a collapsible parent or a direct link
+                    var isCollapsibleParent = this.getAttribute('data-bs-toggle') === 'collapse';
+                    if (!isCollapsibleParent) {
+                        // Only close if it's not a parent of a collapsible menu
+                        toggleSidebar();
+                    }
                 }
             });
-        </script>
-    </form>
+        });
+    });
+
+    // Función JavaScript para limpiar los campos del formulario del modal y establecer el modo "Agregar"
+    function clearModalFormAndSetAddModeMascota() {
+        var txtNombreMascota = document.getElementById('<%= txtNombreMascota.ClientID %>');
+        var txtEdad = document.getElementById('<%= txtEdad.ClientID %>');
+        var ddlSexo = document.getElementById('<%= ddlSexo.ClientID %>');
+        var ddlClientes = document.getElementById('<%= ddlClientes.ClientID %>');
+        var ddlEspecies = document.getElementById('<%= ddlEspecies.ClientID %>'); // <--- AGREGADO: ddlEspecies
+        var ddlRazas = document.getElementById('<%= ddlRazas.ClientID %>');
+        var hfMascotaID = document.getElementById('<%= hfMascotaID.ClientID %>');
+        var lblMensaje = document.getElementById('<%= lblMensaje.ClientID %>');
+        var btnAgregar = document.getElementById('<%= btnAgregar.ClientID %>');
+        var btnActualizar = document.getElementById('<%= btnActualizar.ClientID %>');
+        var modalTitle = document.getElementById('mascotaModalLabel');
+
+        if (txtNombreMascota) txtNombreMascota.value = '';
+        if (txtEdad) txtEdad.value = '';
+        // Restablecer los dropdowns a su primera opción ("Seleccione...")
+        if (ddlSexo) ddlSexo.selectedIndex = 0;
+        if (ddlClientes) ddlClientes.selectedIndex = 0;
+        if (ddlEspecies) ddlEspecies.selectedIndex = 0; // <--- AGREGADO: Reiniciar ddlEspecies
+        if (ddlRazas) ddlRazas.selectedIndex = 0;
+        if (hfMascotaID) hfMascotaID.value = '';
+
+        // Limpiar el mensaje solo cuando se inicia explícitamente un nuevo proceso de 'agregar'
+        if (lblMensaje) {
+            lblMensaje.innerHTML = '';
+            lblMensaje.className = ''; // Esto eliminará la clase alert y cualquier clase de éxito/error
+        }
+
+        if (btnAgregar) btnAgregar.style.display = 'inline-block';
+        if (btnActualizar) btnActualizar.style.display = 'none';
+
+        if (modalTitle) modalTitle.innerText = 'Agregar Nueva Mascota';
+    }
+
+    // Función JavaScript para mostrar el modal de Mascota (llamada desde C#)
+    function showMascotaModal() {
+        var myModal = new bootstrap.Modal(document.getElementById('mascotaModal'));
+        myModal.show();
+    }
+
+    // Función JavaScript para ocultar el modal de Mascota (llamada desde C#)
+    function hideMascotaModal() {
+        var myModal = bootstrap.Modal.getInstance(document.getElementById('mascotaModal'));
+        if (myModal) {
+            myModal.hide();
+        }
+    }
+
+    // Listener de evento para cuando el modal de Mascota se muestra (para manejar el reseteo en modo 'agregar')
+    document.addEventListener('DOMContentLoaded', function () {
+        var mascotaModal = document.getElementById('mascotaModal');
+        if (mascotaModal) {
+            mascotaModal.addEventListener('shown.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                // Solo limpiar si el modal fue activado por el botón 'Add New' (que tiene data-mode="add")
+                if (button && button.getAttribute('data-mode') === 'add') {
+                    clearModalFormAndSetAddModeMascota();
+                }
+            });
+            // Listener de evento para cuando el modal se oculta completamente
+            mascotaModal.addEventListener('hidden.bs.modal', function () {
+                // Resetear la visibilidad de los botones para la próxima vez que se abra el modal en modo 'agregar'
+                clearModalFormAndSetAddModeMascota();
+            });
+        }
+    });
+</script>
+</form>
 </body>
 </html>
